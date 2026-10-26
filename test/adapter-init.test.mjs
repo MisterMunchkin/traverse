@@ -19,7 +19,7 @@ export function projectFixture(t,{src=false}={}){
  if(src)fs.writeFileSync(path.join(project,'tsconfig.json'),JSON.stringify({extends:'expo/tsconfig.base',compilerOptions:{paths:{'@/*':['./src/*']}}}));
  return project;
 }
-test('CV-shaped Expo config is inspected statically without requiring app.json or evaluating configuration',t=>{
+test('JavaScript Expo config is inspected statically without requiring app.json or evaluating configuration',t=>{
  const project=projectFixture(t),snapshot=inspectProject(project);
  assert.equal(snapshot.config.profile,'expo-source-inventory/2');assert.equal(snapshot.config.routing.conventions.routeRoot,'app');
  assert.ok(snapshot.provenance.inputHashes['app.config.js']);assert.ok(snapshot.provenance.inputHashes['metro.config.js']);

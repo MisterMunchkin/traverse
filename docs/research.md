@@ -2,7 +2,7 @@
 
 The experiments asked whether a small local decision model could handle routine UI choices while a frontier model planned tasks and handled escalation. The most useful completed browser study reduced matched driving time and frontier usage. It did not establish general reliability, real-app safety or native-driver performance.
 
-These are historical lab experiments from October 2026, preceding the maintained Traverse package. They use different corpora and policies; do not pool their denominators or treat successive scores as a learning curve. The [aggregate data](research/results.json) carries original lab-relative source names and SHA-256 hashes for provenance. Those names identify retained source artifacts, not public download links.
+These are historical lab experiments from October 2026, preceding the maintained Traverse package. They use different corpora and policies; do not pool their denominators or treat successive scores as a learning curve. The [aggregate data](research/results.json) carries study identifiers and SHA-256 hashes of the original aggregate artifacts. Original private filenames are omitted; the hashes identify retained evidence, not public downloads.
 
 ## Fresh browser comparison — 21 October 2026
 
@@ -25,7 +25,7 @@ On the 23 common completions, driving took 567.637 s alone and 318.429 s assiste
 
 The sole control failure was a 15 s browser-open timeout followed by a 15 s screenshot timeout, before driving/model calls. Its roughly 30.24 s total remains counted in the failed outcome and all-attempt elapsed time; no recording exists. We cannot attribute it to Sol or credit tev1 with preventing it. Driving-only times exclude startup/preparation; total recorded attempt time was 817.111 s alone and 564.392 s assisted, including that failure. Neither timing is a latency distribution.
 
-Real clicks/fills were checked against observed DOM and a server-owned UI event journal. The final audit reconciled 170 decisions/actions, 186 UI events and 16 confirmed fills. All 47 available recordings were probed and paired playback was checked. This verifies the fixture workflow, not actual CV screens, authorization, native prompts or the newly packaged agent-device runner.
+Real clicks/fills were checked against observed DOM and a server-owned UI event journal. The final audit reconciled 170 decisions/actions, 186 UI events and 16 confirmed fills. All 47 available recordings were probed and paired playback was checked. This verifies the fixture workflow, not production app screens, authorization, native prompts or the newly packaged agent-device runner.
 
 ## Earlier driving results
 
@@ -51,12 +51,12 @@ The public-map guard was deliberately narrow. Its record-constraint grammar must
 
 The fresh fixture's paths were only 1–2 navigation hops with 3–6 supplied edges. New pairs on a known graph and reused synthetic workflows are not a held-out application. Two repeats on an active host do not establish independent samples, tail latency, a calibrated acceptance threshold or a model leaderboard. No unsafe fixture effect observed is not proof of safety.
 
-The studies used frozen historical runtime/model identities. The current installer pins Ollama 0.40.8 and `tev1:4b-q8_0`; installation and offline contract checks do not transfer these benchmark scores to a new runtime, quantization or device. Native/CV UI, iOS/Android system dialogs, broader framework support and actual subscription-cost savings need separate validation.
+The studies used frozen historical runtime/model identities. The current installer pins Ollama 0.40.8 and `tev1:4b-q8_0`; installation and offline contract checks do not transfer these benchmark scores to a new runtime, quantization or device. Native UI, iOS/Android system dialogs, broader framework support and actual subscription-cost savings need separate validation.
 
 A useful next study would compare the same frontier-only control against assistance on a held-out browser app or real UI, retaining every failure/timeout, unknown usage, observable effect and available recording. Model names, effort, supplied graph, driver and budgets should remain matched.
 
 ## Evidence included here
 
-`research/results.json` is a compact projection of five recorded aggregate summaries: fresh browser, earlier browser pilot, graph layout, feature regions and navigation portability. It includes outcomes, usage and source hashes without home-directory paths, app-source excerpts, raw prompts or recordings. The Opus figures come from the historical experiment recap, identified under `sourceNotes` in that file.
+`research/results.json` is a compact projection of five recorded aggregate summaries: fresh browser, earlier browser pilot, graph layout, feature regions and navigation portability. It includes outcomes, usage and source hashes without home-directory paths, app-source excerpts, raw prompts or recordings. The Opus figures come from the historical experiment recap, whose artifact hash is retained under `sourceNotes` in that file.
 
 Full raw request/action logs and recordings remain in the original local research archive and are not distributed in the npm package. The aggregate subset makes the headline arithmetic inspectable; it is not a standalone reproduction kit or a publicly downloadable video collection. A clean, redistributable benchmark fixture and raw-evidence release would be separate preparation.

@@ -91,6 +91,6 @@ npm test
 EXPO_OFFLINE=1 EXPO_NO_TELEMETRY=1 npm run export:web
 ```
 
-Export writes ignored `dist/`; it starts no browser/device. Snapshot tests use disposable source fixtures. Dependencies, `.expo/`, exports and local `.wayfinder` state are ignored; the portable config/extractor/graph are intended for Git. Stop only the dev server you started with Ctrl-C. After reviewing ownership and preserving receipts you need, remove this sample's `.wayfinder/`, `dist/`, `.expo/` and `node_modules/` to clean up. No global command, shell profile or real CV checkout was changed.
+Export writes ignored `dist/`; it starts no browser/device. Snapshot tests use disposable source fixtures. Dependencies, `.expo/`, exports and local `.wayfinder` state are ignored; the portable config/extractor/graph are intended for Git. Stop only the dev server you started with Ctrl-C. After reviewing ownership and preserving receipts you need, remove this sample's `.wayfinder/`, `dist/`, `.expo/` and `node_modules/` to clean up. No global command, shell profile or production app checkout was changed.
 
-See the [adoption guide](../../docs/adoption.md) for the broader host-side design and remaining CV integration work.
+See the [adoption guide](../../docs/adoption.md) for the broader host-side design and remaining application integration work.
