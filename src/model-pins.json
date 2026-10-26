@@ -1,0 +1,15 @@
+{
+  "schema": "wayfinder-model-pins/1",
+  "model": {
+    "name": "tev1:4b-q8_0",
+    "digest": "7954dce22bc6c29c3b119656207681d12cb34434fed7caa086bfbc919bef0740"
+  },
+  "runtimes": {
+    "darwin-arm64": {
+      "version": "0.40.8",
+      "url": "https://github.com/ollama/ollama/releases/download/v0.40.8/ollama-darwin.tgz",
+      "archiveSha256": "29fce20c736f62aa8885b1e83552c5fd8dcc63edc5ffc1b47f2de591a06cde44",
+      "executable": "ollama"
+    }
+  }
+}

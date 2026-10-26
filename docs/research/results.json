@@ -1,0 +1,367 @@
+{
+  "schema": "traverse-research-summary/1",
+  "scope": "Historical lab aggregates; not a benchmark of released Traverse or a raw-trace reproduction bundle",
+  "studies": {
+    "browser-fresh": {
+      "source": "artifacts/model-selector/tev1-lab/browser-fresh-v1-20261021/owned-run-v1/summary.json",
+      "sourceSha256": "b1768a128074a677f650b6455857f13ce5b49b2c89b39f8da696386e346dd430",
+      "planned": 48,
+      "retained": 48,
+      "arms": {
+        "sol": {
+          "planned": 24,
+          "retained": 24,
+          "completed": 23,
+          "frontierCalls": 84,
+          "frontierInput": 1206982,
+          "frontierOutput": 1512,
+          "frontierUnknown": 0,
+          "localCalls": 0,
+          "localInput": 0,
+          "localOutput": 0,
+          "localUnknown": 0,
+          "recordings": 23,
+          "outcomes": {
+            "completed": 23,
+            "timeout": 1
+          }
+        },
+        "sol-tev1": {
+          "planned": 24,
+          "retained": 24,
+          "completed": 24,
+          "frontierCalls": 10,
+          "frontierInput": 143528,
+          "frontierOutput": 180,
+          "frontierUnknown": 0,
+          "localCalls": 86,
+          "localInput": 82098,
+          "localOutput": 86,
+          "localUnknown": 0,
+          "recordings": 24,
+          "outcomes": {
+            "completed": 24
+          }
+        }
+      },
+      "paired": {
+        "both": 23,
+        "solOnly": 0,
+        "assistedOnly": 1,
+        "neither": 0,
+        "missing": 0,
+        "solMs": 567637.0196679996,
+        "assistedMs": 318429.42583600007
+      }
+    },
+    "browser-pilot": {
+      "source": "artifacts/model-selector/tev1-lab/browser-ui-v1-20261020/owned-run-v1/summary.json",
+      "sourceSha256": "00632bf88dd34a5362ee1748bf720671e0aec510522a655acee2214ded9a46d9",
+      "planned": 24,
+      "retained": 24,
+      "arms": {
+        "sol": {
+          "planned": 12,
+          "retained": 12,
+          "completed": 12,
+          "frontierCalls": 50,
+          "frontierInput": 710376,
+          "frontierOutput": 900,
+          "frontierUnknown": 0,
+          "localCalls": 0,
+          "localInput": 0,
+          "localOutput": 0,
+          "localUnknown": 0,
+          "recordings": 12,
+          "outcomes": {
+            "completed": 12
+          }
+        },
+        "sol-tev1": {
+          "planned": 12,
+          "retained": 12,
+          "completed": 11,
+          "frontierCalls": 7,
+          "frontierInput": 99631,
+          "frontierOutput": 142,
+          "frontierUnknown": 0,
+          "localCalls": 51,
+          "localInput": 39786,
+          "localOutput": 51,
+          "localUnknown": 0,
+          "recordings": 12,
+          "outcomes": {
+            "completed": 11,
+            "abstained": 1
+          }
+        }
+      },
+      "paired": {
+        "both": 11,
+        "solOnly": 1,
+        "assistedOnly": 0,
+        "neither": 0,
+        "missing": 0,
+        "solMs": 247738.60470900006,
+        "assistedMs": 123085.687667
+      }
+    },
+    "shared-layout": {
+      "source": "artifacts/model-selector/tev1-lab/graph-layout-v1-20261019/owned-run-v1/route-summary.json",
+      "sourceSha256": "9a2e1b528002d120339ed56a31eb151f038682d071e1136d754319ca179abed3",
+      "planned": 96,
+      "retained": 96,
+      "arms": {
+        "shared": {
+          "planned": 48,
+          "retained": 48,
+          "completed": 40,
+          "requests": 152,
+          "input": 83416,
+          "output": 152,
+          "unknown": 0,
+          "outcomes": {
+            "completed": 40,
+            "abstained": 8,
+            "unsafe": 0,
+            "step-limit": 0,
+            "budget-failure": 0,
+            "timeout": 0,
+            "transport-failure": 0,
+            "pipeline-failure": 0
+          }
+        },
+        "per-option": {
+          "planned": 48,
+          "retained": 48,
+          "completed": 25,
+          "requests": 135,
+          "input": 87428,
+          "output": 135,
+          "unknown": 0,
+          "outcomes": {
+            "completed": 25,
+            "abstained": 23,
+            "unsafe": 0,
+            "step-limit": 0,
+            "budget-failure": 0,
+            "timeout": 0,
+            "transport-failure": 0,
+            "pipeline-failure": 0
+          }
+        }
+      }
+    },
+    "feature-regions": {
+      "source": "artifacts/model-selector/tev1-lab/feature-regions-v1-20261019/owned-run-v1/route-summary.json",
+      "sourceSha256": "f951197d28016613ba0c8cbbb23c06e093828b2c398caebd453d7cdbb796f40b",
+      "planned": 192,
+      "retained": 192,
+      "arms": {
+        "flat": {
+          "planned": 64,
+          "retained": 64,
+          "completed": 40,
+          "solvablePlanned": 56,
+          "negativePlanned": 8,
+          "solvableCompleted": 40,
+          "negativeAdmissions": 8,
+          "requests": 196,
+          "input": 161660,
+          "output": 196,
+          "unknown": 0,
+          "outcomes": {
+            "completed": 40,
+            "abstained": 24,
+            "unsafe": 0,
+            "step-limit": 0,
+            "budget-failure": 0,
+            "timeout": 0,
+            "transport-failure": 0,
+            "pipeline-failure": 0
+          }
+        },
+        "grouped": {
+          "planned": 64,
+          "retained": 64,
+          "completed": 42,
+          "solvablePlanned": 56,
+          "negativePlanned": 8,
+          "solvableCompleted": 42,
+          "negativeAdmissions": 8,
+          "requests": 198,
+          "input": 183168,
+          "output": 198,
+          "unknown": 0,
+          "outcomes": {
+            "completed": 42,
+            "abstained": 22,
+            "unsafe": 0,
+            "step-limit": 0,
+            "budget-failure": 0,
+            "timeout": 0,
+            "transport-failure": 0,
+            "pipeline-failure": 0
+          }
+        },
+        "spatial3d": {
+          "planned": 64,
+          "retained": 64,
+          "completed": 40,
+          "solvablePlanned": 56,
+          "negativePlanned": 8,
+          "solvableCompleted": 40,
+          "negativeAdmissions": 8,
+          "requests": 196,
+          "input": 226478,
+          "output": 196,
+          "unknown": 0,
+          "outcomes": {
+            "completed": 40,
+            "abstained": 24,
+            "unsafe": 0,
+            "step-limit": 0,
+            "budget-failure": 0,
+            "timeout": 0,
+            "transport-failure": 0,
+            "pipeline-failure": 0
+          }
+        }
+      }
+    },
+    "navigation-portability": {
+      "source": "artifacts/model-selector/tev1-lab/cv-nav-v1-20261020/owned-run-v1/route-summary.json",
+      "sourceSha256": "46a99874d1510bf43d815057b7c4bc005a799e2de923a5a747d382548ed4b501",
+      "planned": 192,
+      "retained": 192,
+      "arms": {
+        "baseline": {
+          "planned": 48,
+          "retained": 48,
+          "completed": 0,
+          "solvablePlanned": 48,
+          "negativePlanned": 0,
+          "solvableCompleted": 0,
+          "negativeAdmissions": 0,
+          "unparsedConstraintStops": 48,
+          "requests": 0,
+          "input": 0,
+          "output": 0,
+          "unknown": 0,
+          "outcomes": {
+            "completed": 0,
+            "abstained": 48,
+            "unsafe": 0,
+            "step-limit": 0,
+            "budget-failure": 0,
+            "timeout": 0,
+            "transport-failure": 0,
+            "pipeline-failure": 0,
+            "progress-stop": 0,
+            "refresh-timeout": 0,
+            "refresh-failure": 0
+          }
+        },
+        "recover": {
+          "planned": 48,
+          "retained": 48,
+          "completed": 0,
+          "solvablePlanned": 48,
+          "negativePlanned": 0,
+          "solvableCompleted": 0,
+          "negativeAdmissions": 0,
+          "unparsedConstraintStops": 48,
+          "requests": 0,
+          "input": 0,
+          "output": 0,
+          "unknown": 0,
+          "outcomes": {
+            "completed": 0,
+            "abstained": 48,
+            "unsafe": 0,
+            "step-limit": 0,
+            "budget-failure": 0,
+            "timeout": 0,
+            "transport-failure": 0,
+            "pipeline-failure": 0,
+            "progress-stop": 0,
+            "refresh-timeout": 0,
+            "refresh-failure": 0
+          }
+        },
+        "budget": {
+          "planned": 48,
+          "retained": 48,
+          "completed": 0,
+          "solvablePlanned": 48,
+          "negativePlanned": 0,
+          "solvableCompleted": 0,
+          "negativeAdmissions": 0,
+          "unparsedConstraintStops": 48,
+          "requests": 0,
+          "input": 0,
+          "output": 0,
+          "unknown": 0,
+          "outcomes": {
+            "completed": 0,
+            "abstained": 48,
+            "unsafe": 0,
+            "step-limit": 0,
+            "budget-failure": 0,
+            "timeout": 0,
+            "transport-failure": 0,
+            "pipeline-failure": 0,
+            "progress-stop": 0,
+            "refresh-timeout": 0,
+            "refresh-failure": 0
+          }
+        },
+        "control": {
+          "planned": 48,
+          "retained": 48,
+          "completed": 46,
+          "solvablePlanned": 48,
+          "negativePlanned": 0,
+          "solvableCompleted": 46,
+          "negativeAdmissions": 0,
+          "unparsedConstraintStops": 0,
+          "requests": 70,
+          "input": 68334,
+          "output": 70,
+          "unknown": 0,
+          "outcomes": {
+            "completed": 46,
+            "abstained": 2,
+            "unsafe": 0,
+            "step-limit": 0,
+            "budget-failure": 0,
+            "timeout": 0,
+            "transport-failure": 0,
+            "pipeline-failure": 0,
+            "progress-stop": 0,
+            "refresh-timeout": 0,
+            "refresh-failure": 0
+          }
+        }
+      }
+    },
+    "sourceNotes": [
+      {
+        "source": "docs/handoffs/2026-10-07-stage3-closed-loop-comparison.md",
+        "sourceSha256": "7484d5af4945397aa4b1f935ccf78531bcadf9535ff51cbc2b68e33b14770fe4"
+      },
+      {
+        "source": "docs/handoffs/2026-10-07-stage3-approved-repairs.md",
+        "sourceSha256": "a58f3dd5dd32b93bb8617cfe540bad5556dd54b2a34db924bb2e303f8df589aa"
+      },
+      {
+        "source": "docs/handoffs/2026-10-19-tev1-experiment-recap.md",
+        "sourceSha256": "3fecf55e7e40a56ff8aade4a95da4db0735e2e3de68f26225f344b362d9191fd"
+      },
+      {
+        "source": "docs/handoffs/2026-10-21-tev1-browser-fresh-checkpoint.md",
+        "sourceSha256": "6fb0bfbdecbfc93c797ad032f63d19d55e0651b62f4a424b46e3e9c3e40f45a2"
+      }
+    ]
+  }
+}

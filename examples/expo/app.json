@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "Wayfinder Field Notes",
+    "slug": "wayfinder-expo",
+    "version": "1.0.0",
+    "scheme": "wayfinderexpo",
+    "userInterfaceStyle": "light",
+    "web": {
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router"
+    ]
+  }
+}
