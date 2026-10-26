@@ -24,7 +24,7 @@ test('terminal help has branded sections and copyable commands without loading a
   for (const section of ['◈ Traverse', 'Commands', 'Options', 'Examples']) assert.ok(plain.includes(section), section);
   assert.match(plain, /Usage: traverse init/);
   assert.match(plain, /traverse snapshot --out \.wayfinder\/snapshots\/first/);
-  assert.doesNotMatch(plain, /Native CV|validation.*pending|require-driving/i);
+  assert.doesNotMatch(plain, /Native\s+[^\n]*driving\s*:|validation.*pending|require-driving/i);
 });
 
 test('terminal version is branded and redirected version remains bare semver', () => {
@@ -40,7 +40,7 @@ test('terminal doctor reports configuration failures with evidence and remediati
   const plain = strip(text);
   for (const label of ['✓ PASS', '! WARN', '× FAIL', '22.21.1', 'Run traverse init']) assert.ok(plain.includes(label), label);
   assert.match(plain, /Configuration: NOT READY/);
-  assert.doesNotMatch(plain, /Native CV|VALIDATION PENDING/);
+  assert.doesNotMatch(plain, /Native\s+[^\n]*driving\s*:|VALIDATION PENDING/i);
 });
 
 for (const [label, options] of [

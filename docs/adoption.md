@@ -1,6 +1,6 @@
-# Traverse: local extractor pipeline and CV Mobile adoption
+# Extractor and installation guide
 
-Traverse can prepare an authoring request, review and validate an extractor, pin it, and refresh a source inventory without an LLM. **It is not installed into CV Mobile or agent-device.** Only the existing Expo source profile is supported. Real agent generation and real CV/native driving remain unverified.
+Traverse can prepare an authoring request, review and validate an extractor, pin it, and refresh a source inventory without an LLM. It runs alongside an app rather than embedding an SDK. Only the existing Expo source profile is supported. End-to-end native driving remains unverified.
 
 Traverse is the installed product name, independent of model choice. `projects/traverse` is the maintained private package; `mobile-agent-lab` and `tools/tev1-lab` retain the research and historical studies. The package also works when copied, including its lockfile, into a stable owned directory outside the lab. Historical reports and command receipts retain their original names.
 
@@ -16,11 +16,11 @@ Project checks, read-only init modes, plain stderr progress and stdout JSON are 
 
 The repository commands publish `.wayfinder/graph.json` as a single atomic `wayfinder-repository-graph/1` envelope binding source/configuration/extractor/generator fingerprints to the inventory. `graph check` recomputes source and trusted reference equivalence without executing an unknown artifact. `graph refresh` reuses acceptance and makes zero author calls. `graph watch` serializes debounced refreshes, preserves the last valid graph on failure and closes watchers/owned processes on interruption. In JSON mode watch streams NDJSON ready/stale/stopped events; other commands emit one result.
 
-The low-level CLI remains `bin/extractor-pipeline.mjs`. It returns `cv-navigation/1`, a partial static source inventory. Guards, hidden registrations, source locations/hashes, ambiguous/dynamic/history targets and limitations stay explicit. It cannot establish visible controls, enabled actions, app state, business effects or backend truth.
+The low-level CLI remains `bin/extractor-pipeline.mjs`. It returns `cv-navigation/1`, the legacy identifier for version 1 of the navigation-inventory JSON format. This is a saved-data contract, not an app or service dependency. Renaming it requires an explicit format migration so existing graphs and reviewed extractor artifacts remain valid. The inventory is partial and static. Guards, hidden registrations, source locations/hashes, ambiguous/dynamic/history targets and limitations stay explicit. It cannot establish visible controls, enabled actions, app state, business effects or backend truth.
 
 V1 requires normalized equivalence to the pinned existing Expo reference on every execution. Fixed, handwritten miniature expectations independently test routes, aliases, ownership, guards, hidden registrations and uncertainties. This intentionally certifies the current Expo inventory profile; authoring a different framework requires a separately owned contract and conformance expansion. It does not certify arbitrary framework adapters.
 
-The existing `cv-navigation-cases.mjs` makes **synthetic** CV fixtures. `browser/observation.mjs` projects DOM buttons/textboxes and synthetic semantics; it is not a native CV snapshot adapter. `browser/run.mjs` is an experimental host study runner with private artifact paths and explicit budgets, not a production installer or an agent-device extension. The browser checkpoint demonstrates only its stated fixture workload.
+Historical browser experiments used synthetic routes, records and UI semantics. They validate only their fixture workloads; see the [research notes](research.md).
 
 ## Host prerequisites and pins
 
@@ -40,7 +40,7 @@ Device/model tooling is unnecessary for these commands. For a later authorized U
 
 ## Checkout-based installation and doctor
 
-The package-root `install.sh` is now a thin POSIX entrypoint to Node setup code. This is a developer installation referencing this exact checkout, which must remain available. It does not copy the repository, change PATH/shell profiles, install global tools or download models. Do not delete/move the checkout while using its launcher. Promotion verification uses disposable prefixes and an isolated package copy; no default-prefix or CV installation is performed. An earlier user-owned prototype installation remains pinned to its original checkout.
+The package-root `install.sh` is now a thin POSIX entrypoint to Node setup code. This is a developer installation referencing this exact checkout, which must remain available. It does not copy the repository, change PATH/shell profiles, install global tools or download models. Do not delete/move the checkout while using its launcher. Promotion verification uses disposable prefixes and an isolated package copy; no default-prefix or application installation is performed. An earlier user-owned prototype installation remains pinned to its original checkout.
 
 Choose an unused absolute user-owned prefix and a Node executable meeting the checked-in `>=22.11` engines. Paths with spaces, apostrophes and shell metacharacters remain literal arguments:
 
@@ -76,7 +76,7 @@ To update, inspect/pin the new checkout and Node/dependencies, install into a ne
 
 ## Prepare, review, accept, refresh
 
-The checked-in example is synthetic; its `6.0.0` version is an example input, not a claim about current CV dependencies. For real source, supply the exact installed/locked framework version, relevant routing configuration, explicit `app`/`@/` conventions, revision and a read-only JSON snapshot of relevant TypeScript/JavaScript source. Snapshot creation must exclude secrets and retain the precise included-file manifest. `sourceFingerprint` binds actual bytes; the revision alone does not account for local edits. No command here scans a sibling checkout implicitly.
+The checked-in example is synthetic; its `6.0.0` version is an example input, not a supported framework-version claim. For real source, supply the exact installed/locked framework version, relevant routing configuration, explicit `app`/`@/` conventions, revision and a read-only JSON snapshot of relevant TypeScript/JavaScript source. Snapshot creation must exclude secrets and retain the precise included-file manifest. `sourceFingerprint` binds actual bytes; the revision alone does not account for local edits. No command here scans a sibling checkout implicitly.
 
 Use a new directory for every request, author run, acceptance and refresh. From the Traverse package root:
 
@@ -130,9 +130,9 @@ Example config structure (paths must be real absolute paths chosen by the operat
 
 This is a protocol example, **not an installed author adapter**. No real provider adapter was configured or invoked in this work. Identity fields are declarations, not attestation; saved command/stdout and provider receipts must prove an actual model run before claiming generation. Default tests run `fixtures/extractor-pipeline/fake-author.mjs` through Node with identity `fake/offline/reference-copy/none`. It merely returns the reference wrapper. Malformed-output and command-failure attempts retain diagnostics. Repairs after execution/conformance failure are manual, bounded new author runs and require new review; there is no autonomous validation-repair loop.
 
-The author receives source as JSON data, not a writable path to a CV checkout. This protocol is a read-only source handoff, **not OS isolation**. Both the configured author command and reviewed extractor have host authority. The cache, reduced environment and subprocess working directory do not stop malicious filesystem/network access. Do not mark unknown code trusted just to pass tests. Run untrusted authors/candidates in a separately provisioned sandbox or container before importing reviewed bytes; building one is outside v1. The review record is a local trust acknowledgement, not a cryptographic signature or adversarial cache protection.
+The author receives source as JSON data, not a writable path to an application checkout. This protocol is a read-only source handoff, **not OS isolation**. Both the configured author command and reviewed extractor have host authority. The cache, reduced environment and subprocess working directory do not stop malicious filesystem/network access. Do not mark unknown code trusted just to pass tests. Run untrusted authors/candidates in a separately provisioned sandbox or container before importing reviewed bytes; building one is outside v1. The review record is a local trust acknowledgement, not a cryptographic signature or adversarial cache protection.
 
-## Future CV / agent-device pilot
+## Future application pilot
 
 A small, separately authorized pilot needs these missing integrations:
 
@@ -140,14 +140,14 @@ A small, separately authorized pilot needs these missing integrations:
 2. **Native observation/action projection.** Implement and independently test a projection from actual agent-device native snapshots to current visible/enabled controls, with layer/occlusion handling and stale-ref rejection. Do not reuse the DOM projector as if its semantics were native. Bind each offered control to source evidence only when unambiguous; preserve unknown edges/guards. Establish business effects and state through observations/contracts rather than inferred navigation alone.
 3. **Owned session.** Reserve one disposable device and a unique session. Check capacity; never stop someone else's device/process. Use the installed CLI's documented `open`, `snapshot`, `fill`/`click`, `close` with explicit device/UDID/serial and `--session`. Re-snapshot after meaningful state changes. Do not use direct store mutation as action evidence.
 4. **Decision loop and fallback.** On each step supply the goal, fresh current controls and bounded source graph facts. Only current offered IDs may be chosen. The existing browser candidate uses tev1 margin 0.819, confidence floor 0, estimated 1,500-input-token cap and single-option none fallback; failed/abstained local decisions escalate to explicit Sol 6.1/medium. Those are browser fixture settings, not native safety calibration. Missing candidates or ambiguous effects stop/escalate; the frontier cannot manufacture unavailable actions.
-5. **Pilot acceptance.** Use synthetic users and an owned mock backend: navigate to one account route, edit a value, dismiss the keyboard, Save, reopen and verify the committed value; edit again, Cancel, reopen and verify preservation. Include one ambiguous/guarded route requiring escalation. Record starting state, ordered user actions, exact observations, preserved values, attempt/deadline failures and receipts. Separate dispatch acknowledgement from effect confirmation. Keep unsuccessful attempts in outcomes. No live CV/backend credential use is authorized here.
+5. **Pilot acceptance.** Use synthetic users and an owned mock backend: navigate to one account route, edit a value, dismiss the keyboard, Save, reopen and verify the committed value; edit again, Cancel, reopen and verify preservation. Include one ambiguous/guarded route requiring escalation. Record starting state, ordered user actions, exact observations, preserved values, attempt/deadline failures and receipts. Separate dispatch acknowledgement from effect confirmation. Keep unsuccessful attempts in outcomes. Use synthetic data and an owned mock backend.
 6. **Cleanup/update/removal.** Close only the owned agent-device session; stop only owned runtime/mock process groups and verify they exited; delete only disposable devices explicitly created for that pilot. Keep receipts, hashes and failed attempts. For pipeline removal, delete only caller-owned request/cache/run directories and this local checkout when no longer needed. There is no app package, global plugin or shared-service configuration to uninstall. Update pins deliberately and rerun conformance/review before accepting incompatible artifacts.
 
-No real CV source/build identity, native projection, provider-generation receipt, UI effect contract or pilot result is delivered by this work. The source pipeline is a preparation layer for that future integration.
+A source inventory does not establish the running app’s build identity, native UI bindings, durable business effects or end-to-end driving success. The source pipeline is a preparation layer for that future integration.
 
 ## Runnable installation sample
 
-The source checkout includes `examples/expo` (not bundled in the CLI archive): a small Expo Router app with synthetic session-only Save/Cancel state. Install the archive once, then run `traverse init` in that directory. The shared static snapshot reader feeds actual source bytes and locked routing identity into reference/review/accept; the sample wrapper additionally checks its fixed example routes. No nested Git root, native driving or real-CV installation is implied.
+The source checkout includes `examples/expo` (not bundled in the CLI archive): a small Expo Router app with synthetic session-only Save/Cancel state. Install the archive once, then run `traverse init` in that directory. The shared static snapshot reader feeds actual source bytes and locked routing identity into reference/review/accept; the sample wrapper additionally checks its fixed example routes. No nested Git root, native driving or production-app installation is implied.
 
 ## Promotion and existing acceptance
 
