@@ -81,6 +81,7 @@ function currentConfig(project, {migrate = false} = {}) {
   if(!has(file)) return false;
   const stat=fs.statSync(file);if(!stat.isFile()||stat.size>1024*1024) fail('Project configuration must be a regular file under 1 MiB');
   let value;try { value=JSON.parse(fs.readFileSync(file,'utf8')); } catch { fail('Malformed project configuration; inspect .wayfinder/project.json locally'); }
+  if(value.contract==='cv-navigation/1') fail('Navigation format changed; preserve the entire .wayfinder directory under another name, then run traverse init for a fresh graph and extractor review. Old approvals are not migrated; see the navigation format upgrade in docs/adoption.md.');
   if(value.schema==='wayfinder-project/1') {
     if(canonical(value)!==canonical({...project.config,schema:'wayfinder-project/1',projectRoot:project.root})) fail('Legacy project configuration differs from this directory or routing profile');
     if(!migrate) fail('Legacy project configuration requires traverse init --migrate; the original will be preserved locally');

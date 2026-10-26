@@ -4,6 +4,8 @@ Give UI agents a navigation map and a small local model for routine decisions. T
 
 **Prototype:** Expo Router extraction is supported. Packaged native driving still needs end-to-end validation.
 
+![Conceptual Traverse flow: reviewed source graph and fresh UI feed tev1; uncertain choices escalate to Codex or Claude, actions use agent-device and the UI is observed again.](docs/assets/traverse-overview.png)
+
 ## Install
 
 Requires Node **22.11+**. The npm package is not published yet; build from this repository:
@@ -42,12 +44,7 @@ For a ready-made project, try the [Expo example](examples/expo/README.md).
 
 A browser-fixture study compared the **same Sol 6.1 model at medium effort**, alone and with tev1. Twelve tasks ran twice per arm: **48 attempts**, including failures.
 
-| Measurement | Sol alone | Sol + tev1 |
-| --- | ---: | ---: |
-| Completed attempts | 23/24 | 24/24 |
-| Driving time, 23 common completions | 567.64 s | 318.43 s |
-| Frontier requests, all attempts | 84 | 10 |
-| Frontier input tokens, all attempts | 1,206,982 | 143,528 |
+![Browser fixture results: Sol alone versus Sol with tev1. Matched driving: 567.64 versus 318.43 seconds; frontier input tokens: 1,206,982 versus 143,528; frontier requests: 84 versus 10. Completed attempts: 23/24 versus 24/24.](docs/assets/browser-results.png)
 
 Assistance used **43.9% less matched driving time** and **88.1% fewer frontier input tokens**. Driving time excludes startup/preparation. The control's startup timeout stays counted; it does not establish a reliability advantage. Dollar charges and local compute costs were not measured, and large frontier context contributed to token savings.
 

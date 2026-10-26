@@ -1,4 +1,5 @@
 import path from 'node:path';
+import {CONTRACT} from '../extractor-pipeline/contract.mjs';
 import {createHash} from 'node:crypto';
 import {createRequire} from 'node:module';
 import {parseTsx,attrValue,attrExpression,loc,unwrap} from './ast.mjs';
@@ -91,5 +92,5 @@ export function extractNavigationSource(input,{routeRoot="app",aliases={"@/*":["
    for(const next of imports.get(file)??[])queue.push([...chain,next]);
   }}
  const manifest=Object.fromEntries(Object.entries(files).map(([file,text])=>[file,{sha256:hash(text),bytes:Buffer.byteLength(text)}]));
- return {schema:'cv-navigation/1',parser:'typescript@'+ts.version,sourceFingerprint:hash(JSON.stringify(manifest)),files:manifest,nodes,registrations,sites:[...sitesByFile].flatMap(([file,sites])=>sites.map(s=>({file,...s}))),edges,unresolved,coverage:'partial-static-source',limits:{componentDepth:8,unsupported:['runtime visibility','business/API effects','unresolved dynamic targets','history-dependent targets','imperative helper call graph']},stats:{files:Object.keys(files).length,nodes:nodes.length,registrations:registrations.length,edges:edges.length,unresolved:unresolved.length}};
+ return {...CONTRACT,parser:'typescript@'+ts.version,sourceFingerprint:hash(JSON.stringify(manifest)),files:manifest,nodes,registrations,sites:[...sitesByFile].flatMap(([file,sites])=>sites.map(s=>({file,...s}))),edges,unresolved,coverage:'partial-static-source',limits:{componentDepth:8,unsupported:['runtime visibility','business/API effects','unresolved dynamic targets','history-dependent targets','imperative helper call graph']},stats:{files:Object.keys(files).length,nodes:nodes.length,registrations:registrations.length,edges:edges.length,unresolved:unresolved.length}};
 }

@@ -60,3 +60,8 @@ A useful next study would compare the same frontier-only control against assista
 `research/results.json` is a compact projection of five recorded aggregate summaries: fresh browser, earlier browser pilot, graph layout, feature regions and navigation portability. It includes outcomes, usage and source hashes without home-directory paths, app-source excerpts, raw prompts or recordings. The Opus figures come from the historical experiment recap, whose artifact hash is retained under `sourceNotes` in that file.
 
 Full raw request/action logs and recordings remain in the original local research archive and are not distributed in the npm package. The aggregate subset makes the headline arithmetic inspectable; it is not a standalone reproduction kit or a publicly downloadable video collection. A clean, redistributable benchmark fixture and raw-evidence release would be separate preparation.
+
+
+## README figures
+
+The [results chart](assets/browser-results.png) reads the `browser-fresh` aggregate in [results.json](research/results.json); the [overview](assets/traverse-overview.png) is a conceptual diagram, not a UI screenshot. Regenerate both with `python3 scripts/render-readme.py` from the repository root (requires Matplotlib). No model or device is used. Numeric labels and separate units/denominators retain the study boundaries above.

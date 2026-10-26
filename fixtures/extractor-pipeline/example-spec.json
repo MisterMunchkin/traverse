@@ -1,7 +1,21 @@
 {
-  "framework": {"package": "expo-router", "version": "6.0.0"},
-  "routing": {"config": {"exampleOnly": true}, "conventions": {"routeRoot": "app", "componentAlias": "@/"}},
-  "contract": "cv-navigation/1",
+  "framework": {
+    "package": "expo-router",
+    "version": "6.0.0"
+  },
+  "routing": {
+    "config": {
+      "exampleOnly": true
+    },
+    "conventions": {
+      "routeRoot": "app",
+      "componentAlias": "@/"
+    }
+  },
+  "contract": {
+    "schema": "traverse-navigation",
+    "schemaVersion": 1
+  },
   "profile": "expo-source-inventory/1",
   "source": {
     "revision": "synthetic-example-v1",

@@ -71,7 +71,7 @@ test('wrong trust, unreviewed code and fabricated graph preserve project publica
  const file=path.join(project,'candidate.json');fs.writeFileSync(file,JSON.stringify(artifact));
  const unreviewed=invoke(project,['--adapter',file],process.env,1);assert.equal(unreviewed.adapter.kind,'review-required');assert.deepEqual(published(project),before);
  const wrong=invoke(project,['--adapter',file,'--trust-adapter','0'.repeat(64)],process.env,1);assert.match(wrong.error,/hash/);assert.deepEqual(published(project),before);
- artifact.files['extract.mjs']=`process.stdout.write(JSON.stringify({schema:'cv-navigation/1',nodes:[]}));`;fs.writeFileSync(file,JSON.stringify(artifact));
+ artifact.files['extract.mjs']=`process.stdout.write(JSON.stringify({schema:'traverse-navigation',schemaVersion:1,nodes:[]}));`;fs.writeFileSync(file,JSON.stringify(artifact));
  const invalid=invoke(project,['--adapter',file,'--trust-adapter',artifactHash(artifact)],process.env,1);assert.equal(invalid.ready,false);assert.deepEqual(published(project),before);
 });
 test('read-only init and unsupported routers do not invoke a provider or create project state',t=>{

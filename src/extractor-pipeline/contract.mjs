@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 
-export const CONTRACT = 'cv-navigation/1';
+export const CONTRACT = Object.freeze({schema: 'traverse-navigation', schemaVersion: 1});
 export const PROFILE = 'expo-source-inventory/1';
 export const sha = value => createHash('sha256').update(value).digest('hex');
 export function canonical(value) {
@@ -36,7 +36,7 @@ export function compatibility(spec) {
   object(spec.framework, ['package', 'version']);
   assert.equal(spec.framework.package, 'expo-router', 'unsupported framework: new profile/conformance required');
   assert.match(spec.framework.version, /^\d+\.\d+\.\d+(?:-[\w.-]+)?$/, 'exact framework version required');
-  assert.equal(spec.contract, CONTRACT, 'unsupported graph contract');
+  assert.deepEqual(spec.contract, CONTRACT, 'unsupported graph contract; prepare a fresh Traverse request and review the new artifact');
   assert.ok([PROFILE,'expo-source-inventory/2'].includes(spec.profile), 'unsupported profile: independent conformance required');
   object(spec.routing, ['config', 'conventions']);
   assert.ok(spec.routing.config && typeof spec.routing.config === 'object' && !Array.isArray(spec.routing.config), 'routing config object required');
@@ -53,8 +53,8 @@ const role = id => id.split('/').find(p => ['provider', 'client', '(provider)', 
 const matches = (a, b) => { const x = a.split('/').filter(Boolean), y = b.split('/').filter(Boolean); return x.length === y.length && x.every((p, i) => p === y[i] || /^\[.+\]$/.test(y[i]) || /^\[.+\]$/.test(p) || p.includes('${')); };
 export function validateGraph(g, files, {routeRoot="app"}={}) {
   const routeId=file=>"/"+file.slice(routeRoot.length+1).replace(/\.[jt]sx?$/,"").replace(/(^|\/)index$/,"").replace(/\/$/,"");
-  object(g, ['schema', 'parser', 'sourceFingerprint', 'files', 'nodes', 'registrations', 'sites', 'edges', 'unresolved', 'coverage', 'limits', 'stats'], [], 'inventory');
-  assert.equal(g.schema, CONTRACT, 'schema mismatch'); assert.equal(g.coverage, 'partial-static-source', 'unsupported capability');
+  object(g, ['schema', 'schemaVersion', 'parser', 'sourceFingerprint', 'files', 'nodes', 'registrations', 'sites', 'edges', 'unresolved', 'coverage', 'limits', 'stats'], [], 'inventory');
+  assert.equal(g.schema, CONTRACT.schema, 'schema mismatch'); assert.equal(g.schemaVersion, CONTRACT.schemaVersion, 'schema version mismatch'); assert.equal(g.coverage, 'partial-static-source', 'unsupported capability');
   assert.equal(g.parser, 'typescript@6.0.3', 'parser identity');
   assert.deepEqual(g.files, manifest(files), 'source provenance manifest mismatch');
   assert.equal(g.sourceFingerprint, sourceFingerprint(files), 'source fingerprint mismatch');
