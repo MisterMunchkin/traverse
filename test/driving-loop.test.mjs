@@ -16,7 +16,7 @@ const snapshot = async (saved = false, value = '') => {
     {role: 'button', label: 'Save', ref: 'e2'},
   ]}, {target: {platform: 'web', app: 'http://fixture'}});
 };
-const graph = {schema: 'cv-navigation/1', nodes: [{id: '/', path: '/'}], edges: [], coverage: 'partial'};
+const graph = {schema: 'traverse-navigation', schemaVersion: 1, nodes: [{id: '/', path: '/'}], edges: [], coverage: 'partial'};
 function directory(t) {
   const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'wayfinder-loop-')));
   t.after(() => fs.rmSync(dir, {recursive: true, force: true})); return dir;

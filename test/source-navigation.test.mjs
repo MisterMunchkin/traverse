@@ -40,3 +40,10 @@ test('graph extraction is deterministic and source fingerprints change with sour
 test('client provider-detail routes retain the outer client role rather than the subject name',()=>{
  const g=extractNavigationSource({...files,'app/(views)/client/provider/[providerId].tsx':`export default()=>null`});assert.equal(g.nodes.find(n=>n.file==='app/(views)/client/provider/[providerId].tsx').role,'client');
 });
+
+
+test('extracted inventory advertises the independently versioned navigation format',()=>{
+ const graph=extractNavigationSource(files);
+ assert.equal(graph.schema,'traverse-navigation');
+ assert.equal(graph.schemaVersion,1);
+});

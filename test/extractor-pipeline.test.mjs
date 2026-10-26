@@ -129,3 +129,30 @@ test('consumers reject incomplete or altered authoring contracts even with recom
   const {requestHash, ...body} = altered; altered.requestHash = digest(body);
   assert.throws(() => verifyRequest(altered), /AUTHORING_CONTRACT_MISMATCH/);
 });
+
+
+test('graph version is required and exact at the validation boundary',()=>{
+ const graph={...extractNavigationSource(files),schema:'traverse-navigation',schemaVersion:1};
+ assert.doesNotThrow(()=>validateGraph(graph,files));
+ for(const version of [undefined,null,'1',0,2,1.5]){
+  const invalid={...graph,schemaVersion:version};if(version===undefined)delete invalid.schemaVersion;
+  assert.throws(()=>validateGraph(invalid,files),/missing fields|schema version mismatch/);
+ }
+ assert.throws(()=>validateGraph({...graph,schema:'cv-navigation/1'},files),/schema mismatch/);
+});
+
+test('authoring and artifact identities bind both navigation schema name and version',t=>{
+ const d=workspace(t),current=spec();current.contract={schema:'traverse-navigation',schemaVersion:1};
+ const request=prepare(current,path.join(d,'current'));
+ assert.deepEqual(request.compatibility.contract,{schema:'traverse-navigation',schemaVersion:1});
+ assert.equal(request.requirements.graphContract.schema,'traverse-navigation');
+ assert.equal(request.requirements.graphContract.schemaVersion,1);
+ assert.deepEqual(request.requirements.output,{schema:'traverse-navigation',schemaVersion:1});
+ const artifact=referenceArtifact(request);
+ assert.deepEqual(artifact.dependencies.reference,{schema:'traverse-navigation',schemaVersion:1});
+ for(const contract of ['cv-navigation/1',{schema:'traverse-navigation'},{schema:'traverse-navigation',schemaVersion:2},{schema:'traverse-navigation',schemaVersion:'1'},{schema:'traverse-navigation',schemaVersion:1,unknown:true}]){
+  assert.throws(()=>prepare({...current,contract},path.join(d,'invalid')),/unsupported graph contract/);
+ }
+ artifact.dependencies.reference={schema:'traverse-navigation',schemaVersion:2};
+ assert.throws(()=>validateArtifact(artifact),/unsupported dependencies/);
+});

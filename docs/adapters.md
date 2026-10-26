@@ -4,7 +4,7 @@
 
 ## First supported profiles
 
-Both profiles produce `cv-navigation/1`, a partial static source inventory with source locations, guards and unresolved targets. Neither proves runtime visibility or business effects.
+Both profiles produce `traverse-navigation` inventories with `schemaVersion: 1`, a partial static source inventory with source locations, guards and unresolved targets. Neither proves runtime visibility or business effects.
 
 - `expo-source-inventory/1` preserves the original static SDK57 example profile and its bundled extractor.
 - `expo-source-inventory/2` supports installed/declared/npm-locked Expo57 and Expo Router57, `expo-router/entry`, `app/` or `src/app/`, project-relative wildcard aliases and static Router facts inside `app.json`, `app.config.js`, `.ts`, `.mjs` or `.cjs`. Metro/Babel config files are fingerprinted without execution. Non-source assets are excluded from source inventory. Unknown or dynamic routing facts are rejected with a specific reason.

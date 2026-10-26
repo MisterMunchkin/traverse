@@ -180,7 +180,7 @@ export async function doctor(prefix) {
 export {doctorText} from './presentation.mjs';
 
 async function extractorSmoke() {
-  const script = `import assert from 'node:assert/strict';import {extractNavigationSource} from ${JSON.stringify(new URL('./source/navigation.mjs', import.meta.url).href)};const g=extractNavigationSource({'app/index.tsx':"import {router} from 'expo-router';export default()=> <Button onPress={()=>router.push('/next')}/>",'app/next.tsx':'export default()=>null'});assert.equal(g.schema,'cv-navigation/1');assert.equal(g.nodes.length,2);assert.equal(g.edges.length,1);assert.equal(g.edges[0].from,'/');assert.equal(g.edges[0].to,'/next');console.log(JSON.stringify({schema:g.schema,routes:g.nodes.length,edges:g.edges.length,sourceFingerprint:g.sourceFingerprint}));`;
+  const script = `import assert from 'node:assert/strict';import {extractNavigationSource} from ${JSON.stringify(new URL('./source/navigation.mjs', import.meta.url).href)};const g=extractNavigationSource({'app/index.tsx':"import {router} from 'expo-router';export default()=> <Button onPress={()=>router.push('/next')}/>",'app/next.tsx':'export default()=>null'});assert.equal(g.schema,'traverse-navigation');assert.equal(g.schemaVersion,1);assert.equal(g.nodes.length,2);assert.equal(g.edges.length,1);assert.equal(g.edges[0].from,'/');assert.equal(g.edges[0].to,'/next');console.log(JSON.stringify({schema:g.schema,schemaVersion:g.schemaVersion,routes:g.nodes.length,edges:g.edges.length,sourceFingerprint:g.sourceFingerprint}));`;
   return runProcess(process.execPath, ['--input-type=module', '-e', script], {cwd: root, timeoutMs: 5000, maxBytes: 65536, env: {PATH: path.dirname(process.execPath)}});
 }
 

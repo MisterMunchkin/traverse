@@ -65,7 +65,7 @@ test('init human output is finite plain stderr and JSON has no mixed banners',t=
 test('snapshot reads configured source and produces an immutable pipeline spec',t=>{
   const dir=fixture(t);run(dir,['init','--json']);const before=fs.readFileSync(path.join(dir,'.wayfinder/project.json'));
   const out=path.join(dir,'.wayfinder/snapshots/one');run(dir,['snapshot','--out',out,'--json']);
-  const spec=JSON.parse(fs.readFileSync(path.join(out,'spec.json')));assert.equal(spec.contract,'cv-navigation/1');assert.equal(Object.keys(spec.source.files).length,7);
+  const spec=JSON.parse(fs.readFileSync(path.join(out,'spec.json')));assert.deepEqual(spec.contract,{schema:'traverse-navigation',schemaVersion:1});assert.equal(Object.keys(spec.source.files).length,7);
   assert.ok(spec.source.files['app/notes/edit.tsx'].includes('save(draft.value)'));
   run(dir,['snapshot','--out',out,'--json'],1);assert.deepEqual(fs.readFileSync(path.join(dir,'.wayfinder/project.json')),before);
   const nested=path.join(dir,'components');run(nested,['doctor','--json'],1);run(nested,['doctor','--project',dir,'--json']);
@@ -124,4 +124,16 @@ test('checkout installer uses stderr progress, clear reruns and silent JSON',t=>
 test('a project-relative source alias is supported in a read-only initialization preview',t=>{
   const dir=fixture(t);change(dir,'tsconfig.json',p=>{p.compilerOptions.paths['@/*']=['./src/*'];});const before=tree(dir);
   const result=run(dir,['init','--dry-run','--json']);assert.equal(JSON.parse(result.stdout).mode,'dry-run');assert.deepEqual(tree(dir),before);
+});
+
+
+test('legacy navigation identity refuses initialization and refresh before writes, even with migrate',t=>{
+ const dir=fixture(t);run(dir,['init','--json']);
+ change(dir,'.wayfinder/project.json',config=>{config.contract='cv-navigation/1';});
+ const before=tree(dir);
+ for(const args of [['init','--json'],['init','--migrate','--json'],['graph','refresh','--json']]){
+  const result=run(dir,args,1);
+  assert.match(result.stdout+result.stderr,/Navigation format changed.*preserve.*\.wayfinder.*traverse init/i);
+  assert.deepEqual(tree(dir),before);
+ }
 });

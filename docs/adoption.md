@@ -16,7 +16,23 @@ Project checks, read-only init modes, plain stderr progress and stdout JSON are 
 
 The repository commands publish `.wayfinder/graph.json` as a single atomic `wayfinder-repository-graph/1` envelope binding source/configuration/extractor/generator fingerprints to the inventory. `graph check` recomputes source and trusted reference equivalence without executing an unknown artifact. `graph refresh` reuses acceptance and makes zero author calls. `graph watch` serializes debounced refreshes, preserves the last valid graph on failure and closes watchers/owned processes on interruption. In JSON mode watch streams NDJSON ready/stale/stopped events; other commands emit one result.
 
-The low-level CLI remains `bin/extractor-pipeline.mjs`. It returns `cv-navigation/1`, the legacy identifier for version 1 of the navigation-inventory JSON format. This is a saved-data contract, not an app or service dependency. Renaming it requires an explicit format migration so existing graphs and reviewed extractor artifacts remain valid. The inventory is partial and static. Guards, hidden registrations, source locations/hashes, ambiguous/dynamic/history targets and limitations stay explicit. It cannot establish visible controls, enabled actions, app state, business effects or backend truth.
+The low-level CLI remains `bin/extractor-pipeline.mjs`. Its inventory uses `"schema": "traverse-navigation"` and `"schemaVersion": 1`. The schema version is independent of the CLI version. Specs, project configuration and extractor artifacts bind the same pair under `contract`; artifact reference dependencies also bind both fields. The repository graph envelope keeps its existing name and stores this inventory under `inventory`.
+
+The inventory is partial and static. Guards, hidden registrations, source locations/hashes, ambiguous/dynamic/history targets and limitations stay explicit. It cannot establish visible controls, enabled actions, app state, business effects or backend truth.
+
+### Navigation format upgrade
+
+Projects using the former `cv-navigation/1` identity need fresh initialization. Do not hand-edit a graph, request, artifact or approval to replace the tag: hashes and validation bind the complete format. Init, including `--migrate`, refuses the old navigation identity before writing. The older project-config `--migrate` option only handles config placement/version, not navigation-contract upgrades.
+
+Preserve the **entire** existing `.wayfinder` directory at a new, unused path outside the repository and all source roots, then run `traverse init` again. Keep that backup private: local receipts or recordings may contain sensitive data. For example, after confirming the destination does not exist:
+
+```sh
+mv .wayfinder ../wayfinder-before-navigation-v1
+traverse init
+traverse graph check
+```
+
+The new init builds a fresh graph and uses the normal exact-hash extractor review rules. Re-select project preferences in the wizard; retain the old settings and receipts in the backup. Custom extractors need a newly prepared request and fresh explicit review/acceptance. Old approvals are never copied or silently upgraded. Legacy graph tags, missing versions and unsupported versions are rejected. Historical evidence remains unchanged.
 
 V1 requires normalized equivalence to the pinned existing Expo reference on every execution. Fixed, handwritten miniature expectations independently test routes, aliases, ownership, guards, hidden registrations and uncertainties. This intentionally certifies the current Expo inventory profile; authoring a different framework requires a separately owned contract and conformance expansion. It does not certify arbitrary framework adapters.
 
