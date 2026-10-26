@@ -1,0 +1,16 @@
+node_modules/
+.expo/
+dist/
+.wayfinder/
+expo-env.d.ts
+*.log
+# BEGIN Wayfinder project artifacts
+!.wayfinder/
+.wayfinder/*
+!.wayfinder/.gitignore
+!.wayfinder/project.json
+!.wayfinder/settings.json
+!.wayfinder/graph.json
+!.wayfinder/extractor/
+!.wayfinder/extractor/**
+# END Wayfinder project artifacts

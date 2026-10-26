@@ -1,0 +1,13 @@
+{
+  "framework": {"package": "expo-router", "version": "6.0.0"},
+  "routing": {"config": {"exampleOnly": true}, "conventions": {"routeRoot": "app", "componentAlias": "@/"}},
+  "contract": "cv-navigation/1",
+  "profile": "expo-source-inventory/1",
+  "source": {
+    "revision": "synthetic-example-v1",
+    "files": {
+      "app/index.tsx": "import {router} from 'expo-router';export default()=> <Button label=\"Account\" onPress={()=>router.push('/account')}/>",
+      "app/account.tsx": "export default()=>null"
+    }
+  }
+}

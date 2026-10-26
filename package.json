@@ -1,0 +1,34 @@
+{
+  "name": "@mistermunchkin/traverse",
+  "version": "0.12.0",
+  "private": true,
+  "description": "Reviewed repository navigation graphs and bounded agent-device driving; unpublished",
+  "type": "module",
+  "engines": {
+    "node": ">=22.11"
+  },
+  "exports": {
+    "./source/navigation": "./src/source/navigation.mjs",
+    "./source/ast": "./src/source/ast.mjs",
+    "./runtime/process": "./src/runtime/process.mjs"
+  },
+  "scripts": {
+    "test": "node --test --test-concurrency=1 test/*.test.mjs"
+  },
+  "dependencies": {
+    "typescript": "6.0.3"
+  },
+  "bin": {
+    "traverse": "bin/traverse.mjs"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "fixtures/",
+    "install.sh",
+    "npm-shrinkwrap.json",
+    "README.md",
+    "docs/"
+  ],
+  "license": "MIT"
+}
