@@ -1,0 +1,44 @@
+name: Contributor checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: macos-15
+    timeout-minutes: 25
+    env:
+      CI: '1'
+      EXPO_NO_TELEMETRY: '1'
+      NO_COLOR: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: Install package dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Install Expo example dependencies
+        run: npm ci --prefix examples/expo --ignore-scripts --no-audit --no-fund
+      - name: Run contributor gate
+        run: npm run check -- --out .checks/ci
+      - name: Retain failed-check diagnostics
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: contributor-checks
+          path: .checks/ci/
+          if-no-files-found: ignore
+          retention-days: 7
