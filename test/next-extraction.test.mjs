@@ -153,6 +153,23 @@ test('Next CLI graph lifecycle and existing runtime preflight consume unchanged 
   assert.deepEqual(fs.readFileSync(saved), valid, 'failed extraction preserves last valid graph');
 });
 
+test('reference extractor retains the source diagnostic under long execution paths', async t => {
+  const dir = fixture(t), request = createRequest(inspectProject(dir).spec), artifact = referenceArtifact(request);
+  const accepted = await accept(request, artifact, approval(artifact), path.join(dir, 'accepted'));
+  write(dir, 'app/page.tsx', 'export default function(');
+  const newer = createRequest(inspectProject(dir).spec);
+  // Node's unhandled stack repeats the entrypoint path; the supervisor keeps only
+  // its last 500 characters. Make that failure deterministic on short temp roots too.
+  const executionRoot = path.join(dir, 'execution-' + 'x'.repeat(180), 'y'.repeat(100));
+  fs.mkdirSync(executionRoot, {recursive: true});
+  await assert.rejects(refresh(accepted, newer, path.join(executionRoot, 'refresh')), error => {
+    assert.match(error.message, /app\/page.tsx:1: Source contains syntax errors/);
+    assert.equal(error.record.code, 1);
+    assert.deepEqual(JSON.parse(error.record.stderr), {error: 'app/page.tsx:1: Source contains syntax errors', name: 'Error', code: null});
+    return true;
+  });
+});
+
 test('Next watch refreshes accepted code and reports unsupported config as stale', async t => {
   const dir = fixture(t), p = inspectProject(dir), artifact = referenceArtifact(createRequest(p.spec));
   initProject({project: dir}); write(dir, '.wayfinder/extractor/artifact.json', artifact);
