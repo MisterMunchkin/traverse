@@ -2,7 +2,12 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import {cases,expectedFacts} from './fixtures.mjs';
+import {nextCases,nextFacts} from './fixtures-next.mjs';
 export function extractionOptions(compatible){
+ if(compatible?.profile==='next-app-source-inventory/1'){
+  assert.equal(compatible.framework.package,'next');assert.match(compatible.framework.version,/^16\.0\.\d+$/);
+  return {profile:compatible.profile,routeRoot:compatible.routing.conventions.routeRoot,aliases:compatible.routing.config.aliases};
+ }
  if(!compatible||compatible.profile==='expo-source-inventory/1')return {routeRoot:'app',aliases:{'@/*':['./*']}};
  assert.equal(compatible.framework.package,'expo-router','No independent framework conformance support');
  assert.match(compatible.framework.version,/^57\.0\.\d+$/,'No conformance support for this framework version');
@@ -11,6 +16,7 @@ export function extractionOptions(compatible){
 }
 export function conformanceCases(compatible){
  const {routeRoot}=extractionOptions(compatible);
+ if(compatible.profile==='next-app-source-inventory/1')return nextCases(routeRoot);
  if(compatible.profile==='expo-source-inventory/1')return cases;
  // Fixture source is authored for each real layout; requested project paths are never rewritten.
  return cases.map(fixture=>({...fixture,files:Object.fromEntries(Object.entries(fixture.files).map(([name,text])=>{
@@ -20,6 +26,7 @@ export function conformanceCases(compatible){
  })),routeRoot}));
 }
 export function conformanceFacts(graph,fixture){
+ if(fixture.profile==='next-app-source-inventory/1')return nextFacts(graph,fixture);
  if(!fixture.routeRoot)return expectedFacts(graph,fixture);
  expectedFacts(graph,fixture,{routeRoot:fixture.routeRoot});
 }

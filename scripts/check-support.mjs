@@ -28,7 +28,7 @@ export function prerequisites({full = false} = {}) {
 }
 export function inventory() {
   const result = {};
-  const excluded = new Set(['node_modules', '.git', '.wayfinder', '.checks', '.expo', 'dist', '__pycache__', 'expo-env.d.ts']);
+  const excluded = new Set(['node_modules', '.git', '.wayfinder', '.checks', '.expo', '.next', 'dist', '__pycache__', 'expo-env.d.ts']);
   function visit(relative) {
     const file = path.join(root, relative), stat = fs.lstatSync(file);
     if (stat.isSymbolicLink()) throw Error('Check inputs must be regular source paths: ' + relative);

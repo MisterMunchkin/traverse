@@ -76,8 +76,8 @@ export function environmentIdentity() {
   const require = createRequire(new URL('../../package.json', import.meta.url));
   const tsPackage = require.resolve('typescript/package.json'), ts = read(tsPackage);
   assert.equal(ts.version, '6.0.3', 'reference dependency mismatch');
-  const paths = ['src/source/navigation.mjs', 'src/source/ast.mjs', 'package.json', 'npm-shrinkwrap.json', 'src/runtime/process.mjs', 'src/project-profile.mjs'];
-  return {node: process.version, platform: process.platform, arch: process.arch, dependencies: {typescript: {version: ts.version, treeHash: digest(treeHashes(path.dirname(tsPackage)))}}, reference: Object.fromEntries(paths.map(p => [p, sha(fs.readFileSync(path.join(root, p)))])), pipeline: Object.fromEntries(['contract.mjs', 'fixtures.mjs', 'pipeline.mjs', 'validate-worker.mjs','profiles.mjs'].map(p => [p, sha(fs.readFileSync(path.join(here, p)))]))};
+  const paths = ['src/source/navigation.mjs', 'src/source/ast.mjs', 'package.json', 'npm-shrinkwrap.json', 'src/runtime/process.mjs', 'src/project-profile.mjs', 'src/project-next.mjs', 'src/source/next.mjs'];
+  return {node: process.version, platform: process.platform, arch: process.arch, dependencies: {typescript: {version: ts.version, treeHash: digest(treeHashes(path.dirname(tsPackage)))}}, reference: Object.fromEntries(paths.map(p => [p, sha(fs.readFileSync(path.join(root, p)))])), pipeline: Object.fromEntries(['contract.mjs', 'fixtures.mjs', 'pipeline.mjs', 'validate-worker.mjs','profiles.mjs','fixtures-next.mjs'].map(p => [p, sha(fs.readFileSync(path.join(here, p)))]))};
 }
 async function command(command, args, options, recordPath) {
   const startedAt = new Date().toISOString(), start = performance.now();

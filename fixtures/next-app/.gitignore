@@ -1,0 +1,4 @@
+node_modules/
+.next/
+.wayfinder/
+next-env.d.ts

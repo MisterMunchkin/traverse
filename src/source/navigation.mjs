@@ -1,4 +1,5 @@
 import path from 'node:path';
+import {extractNextSource} from './next.mjs';
 import {CONTRACT} from '../extractor-pipeline/contract.mjs';
 import {createHash} from 'node:crypto';
 import {createRequire} from 'node:module';
@@ -54,7 +55,8 @@ function controlFor(sf,node){
 }
 
 // An AST inventory of declared navigation, not a proof of runtime visibility or business effects.
-export function extractNavigationSource(input,{routeRoot="app",aliases={"@/*":["./*"]}}={}){
+export function extractNavigationSource(input,{routeRoot="app",aliases={"@/*":["./*"]},profile}={}){
+ if(profile==='next-app-source-inventory/1')return extractNextSource(input,{routeRoot,aliases});
  const routeId=file=>"/"+file.slice(routeRoot.length+1).replace(/\.[jt]sx?$/,"").replace(/(^|\/)index$/,"").replace(/\/$/,"");
  const files=Object.fromEntries(Object.entries(input).sort(([a],[b])=>a.localeCompare(b))),sfs=new Map(),imports=new Map(),sitesByFile=new Map(),registrations=[];
  const nodes=Object.keys(files).filter(f=>f.startsWith(routeRoot+'/')&&/\.[jt]sx?$/.test(f)&&!/(^|\/)(?:_|\+)/.test(f.slice(routeRoot.length+1))).map(file=>({id:routeId(file),url:url(routeId(file)),file,role:roleOf(routeId(file)),registrations:[],guards:[]}));
