@@ -54,6 +54,9 @@ Earlier experiments also found failures: assistance sometimes lost to the contro
 
 ## Guides
 
+The first project website is a [repository-only static preview](website/README.md):
+run `npm run site:build` and `npm run site:preview` to view it locally. It is not deployed.
+
 - [Installation, graph format and compatibility](docs/adoption.md)
 - [Project settings and agent integration](docs/project-setup.md)
 - [Routing adapters](docs/adapters.md)

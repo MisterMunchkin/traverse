@@ -23,6 +23,7 @@ The package tests read the example's actual installed Expo/Router manifests. Ins
 `npm run check` runs these stages, in order:
 
 - Serial package tests (`npm test`).
+- Static project website link/asset validation and build (`npm run site:build`).
 - Expo example typecheck, lint and snapshot tests.
 - Offline Expo web export; no browser is opened.
 - Actual archive installation and CLI verification (`npm run check:package`).
