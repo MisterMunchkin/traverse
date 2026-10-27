@@ -22,3 +22,8 @@ Machine setup downloads these separately, verifies pinned content and stores it 
 The source-only Expo example retains its existing MIT notice at `examples/expo/LICENSE`, copyright 650 Industries, Inc. (aka Expo). That example and its notice are available in the source checkout and are not part of the CLI archive. Expo and the example's other dependencies retain their own notices.
 
 The research summary describes earlier experiments and includes selected aggregate numbers. It grants no rights to third-party app code, provider outputs, model weights or recordings. Raw prompts, app-source excerpts and recordings are not included in this package.
+
+
+## Contributor CLI guidance
+
+The [Node CLI design guide](contributing/cli-design.md) adapts the CLI Patterns guidance from [0xDarkMatter/claude-mods](https://github.com/0xDarkMatter/claude-mods/blob/fa93328d128d0b4d5f38e6bac7613e7bcc824454/skills/cli-ops/SKILL.md), pinned to that revision. Its original [MIT notice](contributing/cli-design.LICENSE), copyright 2025–2026 0xDarkMatter, is included. The adaptation preserves Traverse's Node implementation and existing contracts; upstream Python choices are not required.

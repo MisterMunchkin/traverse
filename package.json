@@ -13,7 +13,9 @@
     "./runtime/process": "./src/runtime/process.mjs"
   },
   "scripts": {
-    "test": "node --test --test-concurrency=1 test/*.test.mjs"
+    "test": "node --test --test-concurrency=1 test/*.test.mjs",
+    "check": "node scripts/check.mjs",
+    "check:package": "node scripts/package-smoke.mjs"
   },
   "dependencies": {
     "typescript": "6.0.3"

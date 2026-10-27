@@ -59,7 +59,7 @@ Earlier experiments also found failures: assistance sometimes lost to the contro
 - [Routing adapters](docs/adapters.md)
 - [UI driving and recordings](docs/driving.md)
 
-For development, run `npm test`. See `traverse --help` for commands.
+For development, follow [CONTRIBUTING.md](CONTRIBUTING.md) and run `npm run check`. See `traverse --help` for commands.
 
 ## License
 
