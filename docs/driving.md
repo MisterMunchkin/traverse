@@ -86,7 +86,7 @@ The wrapper receives one JSON `wayfinder-frontier-choice-request/1` on stdin: go
 {"pick":"c0","usage":{"inputTokens":123,"outputTokens":4},"costUsd":0.001}
 ```
 
-Usage and cost are optional and retained as unknown when absent. Only `pick` is required for a decision; token/cost claims are provider-reported, not independently billed amounts. Local decision events retain the exact question and answer/error. A caller embedding the internal loop may instead supply its existing frontier callback. Built-in subscription Codex/Claude clients are also available through project setup; see its guide for exact model/effort, usage and validation limits. No public adapter registry is installed. The lab's historical Codex harness remains separate from the packaged clients.
+Usage and cost are optional and retained as unknown when absent. Only `pick` is required for a decision; token/cost claims are provider-reported, not independently billed amounts. Local decision events retain the exact question and answer/error. A caller embedding the internal loop may instead supply its existing frontier callback. Built-in subscription Codex/Claude clients are also available through project setup; see its guide for exact model/effort, usage and validation limits. No public adapter registry is installed. Historical experiment harnesses are not required by the packaged clients.
 
 ## Results and evidence
 
