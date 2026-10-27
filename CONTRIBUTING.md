@@ -1,14 +1,16 @@
 # Contributing to Traverse
 
-Keep changes small, preserve explicit source/graph trust, and exercise the installed package. Read the [CLI design guide](docs/contributing/cli-design.md) before changing commands or terminal output.
+Keep changes small, preserve explicit source/graph trust, and exercise the installed package. Use the [maintainer handbook](docs/maintaining.md) for the source map, architecture, pin updates and releases. Read the [CLI design guide](docs/contributing/cli-design.md) before changing commands or terminal output. Agents can enter through the checked-in [maintainer skill](.agents/skills/traverse-maintainer/SKILL.md); no global skills are required.
 
 ## Fresh checkout
 
 Use macOS arm64 and Node **22.21.1** (`.nvmrc`) for the current full contributor gate. Node 22.13+ is required by the Expo example; the installed CLI's separate minimum remains 22.11. The model-setup tests use macOS arm64 fixtures, so this gate does not establish Linux, Windows or Intel support.
 
-From the repository root, install both lockfiles **sequentially**:
+Clone this repository (GitHub access is required while it is private), select the Node version above, then install both lockfiles **sequentially**:
 
 ```sh
+git clone https://github.com/MisterMunchkin/traverse.git
+cd traverse
 npm ci --ignore-scripts --no-audit --no-fund
 npm ci --prefix examples/expo --ignore-scripts --no-audit --no-fund
 npm run check

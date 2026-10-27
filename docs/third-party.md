@@ -1,6 +1,6 @@
 # Third-party components and licensing
 
-The [MIT license](../LICENSE) covers Traverse's original code and documentation. It does not replace licenses, copyright notices or service terms supplied with other components. This notice describes the maintained package; it does not relicense the surrounding lab or its historical artifacts.
+The [MIT license](../LICENSE) covers Traverse's original code and documentation. It does not replace licenses, copyright notices or service terms supplied with other components.
 
 ## Installed npm dependency
 
