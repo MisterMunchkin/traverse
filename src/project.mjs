@@ -4,6 +4,7 @@ import {CONTRACT, PROFILE, compatibility, manifest, sourceFingerprint, sha, json
 import {noSymlinks} from './installation.mjs';
 import {atomicJson, directory} from './state.mjs';
 import {modernProfile,inspectModernProject} from './project-profile.mjs';
+import {inspectNextProject} from './project-next.mjs';
 
 const has = p => { try { fs.lstatSync(p); return true; } catch(e) { if(e.code === 'ENOENT') return false; throw e; } };
 const fail = message => { throw Error(message); };
@@ -19,7 +20,9 @@ export function inspectProject(directory = process.cwd(), {profile} = {}) {
   const packageInput=path.join(root,'package.json');noSymlinks(packageInput);
   if(fs.statSync(packageInput).size>1024*1024)fail('Package input exceeds 1 MiB');
   const declared=JSON.parse(fs.readFileSync(packageInput,'utf8'));
-  if(!declared.dependencies?.['expo-router'])fail('No supported routing profile detected. This version supports Expo Router57; another framework requires host-owned conformance support before an agent-generated adapter can be accepted.');
+  if(declared.dependencies?.next && declared.dependencies?.['expo-router']) fail('Ambiguous routing frameworks: select a project with only one supported router');
+  if(declared.dependencies?.next && profile===undefined) return inspectNextProject(root);
+  if(!declared.dependencies?.['expo-router'])fail('No supported routing profile detected. This version supports Expo Router57 and the bounded Next16.0 App Router profile; another framework requires host-owned conformance support before an agent-generated adapter can be accepted.');
   if (profile!==PROFILE&&modernProfile(root)) return inspectModernProject(root);
   const hashes = {};
   function regular(relative, directory = false) {
@@ -109,8 +112,9 @@ export function projectIgnoreWrites(root){
 }
 export function initProject({project=process.cwd(),dryRun=false,check=false,migrate=false,onProgress=()=>{}}={}) {
   if(check&&dryRun) fail('Choose --check or --dry-run');
-  onProgress('Checking Expo project');
-  const p=inspectProject(project),existing=currentConfig(p,{migrate}),file=configFile(p.root),ignores=ignorePlan(p.root);
+  const p=inspectProject(project);
+  onProgress(p.config.framework.package==='next'?'Checking Next.js project':'Checking Expo project');
+  const existing=currentConfig(p,{migrate}),file=configFile(p.root),ignores=ignorePlan(p.root);
   if(existing!=='portable'&&!check&&!dryRun) {
     onProgress('Creating project configuration');
     fs.mkdirSync(path.dirname(file),{recursive:true,mode:0o700});noSymlinks(file);
