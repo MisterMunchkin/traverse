@@ -17,7 +17,15 @@ export function nextCases(routeRoot = 'app') {
   };
   // Actual source paths and relative component imports for both roots.
   if (routeRoot === 'src/app') files[routeRoot + '/page.tsx'] = files[routeRoot + '/page.tsx'].replace('../components/menu', '../../components/menu');
-  return [{name: 'next-base', profile: 'next-app-source-inventory/1', routeRoot, files, destination: '/(members)/account', label: 'Account'}, {name: 'next-changed', profile: 'next-app-source-inventory/1', routeRoot, files: {...files, 'components/menu.tsx': files['components/menu.tsx'].replace('href="/account" aria-label="Account"', 'href="/login" aria-label="Login"')}, destination: '/login', label: 'Login'}];
+  return [
+    {name: 'next-base', profile: 'next-app-source-inventory/1', routeRoot, files, destination: '/(members)/account', label: 'Account'},
+    {name: 'next-changed', profile: 'next-app-source-inventory/1', routeRoot, files: {...files, 'components/menu.tsx': files['components/menu.tsx'].replace('href="/account" aria-label="Account"', 'href="/login" aria-label="Login"')}, destination: '/login', label: 'Login'},
+    {name: 'next-barrel', profile: 'next-app-source-inventory/1', routeRoot, files: {...files,
+      [routeRoot + '/page.tsx']: `import {Menu} from '${routeRoot === 'app' ? '../' : '../../'}components';export default()=> <Menu/>`,
+      'components/index.ts': `export {default as Menu} from './forward';export type {Unused} from './missing-types';`,
+      'components/forward.ts': `import Menu from './menu';export default Menu;`,
+    }, destination: '/(members)/account', label: 'Account', componentPath: [routeRoot + '/page.tsx', 'components/index.ts', 'components/forward.ts', 'components/menu.tsx']},
+  ];
 }
 export function nextFacts(g, fixture) {
   const {routeRoot: root} = fixture;
@@ -25,7 +33,7 @@ export function nextFacts(g, fixture) {
   assert.ok(g.nodes.every(n => n.role === null && !n.guards.length && !n.registrations.length), 'Next groups do not imply roles or auth guarantees');
   const menu = g.edges.find(e => e.from === '/' && e.label === fixture.label);
   assert.equal(menu?.to, fixture.destination, 'Next conformance: changed component target');
-  assert.deepEqual(menu.componentPath, [root + '/page.tsx', 'components/menu.tsx']);
+  assert.deepEqual(menu.componentPath, fixture.componentPath ?? [root + '/page.tsx', 'components/menu.tsx']);
   assert.deepEqual(menu.source, {file: 'components/menu.tsx', line: 1, endLine: 1, excerpt: `<Link href="${fixture.destination === '/login' ? '/login' : '/account'}" aria-label="${fixture.label}"/>`});
   assert.equal(g.edges.filter(e => e.source.file === root + '/layout.tsx' && e.to === '/login').length, 6, 'Next conformance: root layout applies to every page');
   assert.ok(g.edges.some(e => e.from === '/(members)/account' && e.to === '/posts/[id]' && e.target === '/posts/42?view=full#title' && e.method === 'push'));

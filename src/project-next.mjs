@@ -41,7 +41,8 @@ export function inspectNextProject(root) {
     const parsed = ts.parseConfigFileTextToJson(name, read(name));
     if (parsed.error) throw Error(`${name}: malformed JSON`);
     const config = parsed.config;
-    if (config.extends || config.compilerOptions?.baseUrl && !['.', './'].includes(config.compilerOptions.baseUrl)) throw Error(`${name}: inherited configuration/custom baseUrl requires another profile`);
+    if (config.extends) throw Error(`${name}: inherited configuration requires another profile`);
+    if (Object.hasOwn(config.compilerOptions ?? {}, 'baseUrl')) throw Error(`${name}: baseUrl is unsupported, including '.' and './'; use relative imports or project-relative wildcard aliases`);
     Object.assign(aliases, config.compilerOptions?.paths ?? {});
     for (const [key, values] of Object.entries(aliases)) if (!/^[\w@/-]+\/\*$/.test(key) || !Array.isArray(values) || values.length !== 1 || typeof values[0] !== 'string' || !(values[0]==='./*'||/^(?:\.\/)?[\w-]+(?:\/[\w-]+)*\/\*$/.test(values[0])) || values[0].replace(/^\.\//, '').split('/').some(p => !p || p === '..' || ['node_modules', '.git', '.wayfinder'].includes(p))) throw Error(`${name}: aliases require one project-relative wildcard target`);
     const keys = Object.keys(aliases);

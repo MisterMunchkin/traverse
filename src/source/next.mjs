@@ -85,9 +85,10 @@ export function extractNextSource(input, {routeRoot = 'app', aliases = {}} = {})
         }
       }
     }
-    const links = new Set(), hooks = new Set(), redirects = new Set(), routers = new Set(), bindings = new Map(), used = new Set();
+    const links = new Set(), hooks = new Set(), redirects = new Set(), routers = new Set(), bindings = new Map(), used = new Set(), forwarded = new Set(), reexports = [];
     for (const n of sf.statements) if (ts.isImportDeclaration(n) && ts.isStringLiteral(n.moduleSpecifier) && n.importClause) {
       const spec = n.moduleSpecifier.text, clause = n.importClause;
+      if (clause.isTypeOnly) continue;
       if (['next/dynamic', 'next/router'].includes(spec)) fail(sf, n, `${spec} requires another extraction profile`);
       if (['next/link', 'next/navigation'].includes(spec) && clause.namedBindings && ts.isNamespaceImport(clause.namedBindings)) fail(sf, n, 'Namespace navigation imports require another extraction profile');
       if (spec === 'next/link' && clause.namedBindings) fail(sf, n, 'next/link requires a default import in this profile');
@@ -95,12 +96,31 @@ export function extractNextSource(input, {routeRoot = 'app', aliases = {}} = {})
       const local = localFile(files, file, spec, aliases);
       if (clause.name && local !== undefined) bindings.set(clause.name.text, local);
       if (clause.namedBindings && ts.isNamedImports(clause.namedBindings)) for (const b of clause.namedBindings.elements) {
+        if (b.isTypeOnly) continue;
         const name = (b.propertyName ?? b.name).text;
         if (spec === 'next/navigation') {
           if (name === 'useRouter') hooks.add(b.name.text);
           if (['redirect', 'permanentRedirect'].includes(name)) redirects.add(b.name.text);
         }
         if (local !== undefined) bindings.set(b.name.text, local);
+      }
+    }
+    // Keep value forwarding in the same file-level ownership graph as JSX imports.
+    // Namespace exports remain deferred; erased type-only dependencies own no UI.
+    for (const n of sf.statements) {
+      if (ts.isExportDeclaration(n) && !n.isTypeOnly && (!n.exportClause || ts.isNamedExports(n.exportClause))) {
+        const values = n.exportClause?.elements.filter(b => !b.isTypeOnly);
+        if (values?.length === 0) continue;
+        if (n.moduleSpecifier && ts.isStringLiteral(n.moduleSpecifier)) {
+          const spec = n.moduleSpecifier.text, dest = localFile(files, file, spec, aliases);
+          if (dest === null) fail(sf, n, `Missing local component re-export input: ${spec}`);
+          if (dest !== undefined) reexports.push(dest);
+        } else if (!n.moduleSpecifier) {
+          for (const b of values ?? []) forwarded.add((b.propertyName ?? b.name).text);
+        }
+      } else if (ts.isExportAssignment(n) && !n.isExportEquals) {
+        const value = unwrap(n.expression);
+        if (ts.isIdentifier(value)) forwarded.add(value.text);
       }
     }
     const collect = n => {
@@ -122,10 +142,10 @@ export function extractNextSource(input, {routeRoot = 'app', aliases = {}} = {})
       ts.forEachChild(n, checkBindings);
     };
     checkBindings(sf);
-    imports.set(file, [...bindings].filter(([name]) => used.has(name)).map(([name, dest]) => {
+    imports.set(file, [...new Set([...bindings].filter(([name]) => used.has(name) || forwarded.has(name)).map(([name, dest]) => {
       if (!dest) fail(sf, sf, `Missing local component input: ${name}`);
       return dest;
-    }));
+    }).concat(reexports))]);
     const add = (n, method, kind, expression, values, label = null, pureNavigation = true) => sites.push({file, method, kind, expression, targets: values, label, pureNavigation, conditions: conditions(sf, n), source: sourceAt(sf, n)});
     const walk = n => {
       if ((ts.isJsxOpeningElement(n) || ts.isJsxSelfClosingElement(n)) && links.has(n.tagName.getText(sf))) {
