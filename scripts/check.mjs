@@ -8,6 +8,7 @@ try {
     const npm = prerequisites({full: true}); check = checks('full', args.out);
     const run = (label, args, cwd = root, timeoutMs = 120000) => check.run(label, process.execPath, [npm, ...args], {cwd, timeoutMs});
     await run('package-tests', ['test'], root, 900000);
+    await run('static-site', ['run', 'site:build']);
     const example = path.join(root, 'examples/expo');
     await run('example-types', ['run', 'typecheck'], example);
     await run('example-lint', ['run', 'lint'], example);

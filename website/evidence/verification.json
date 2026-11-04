@@ -1,0 +1,69 @@
+{
+  "baseCommit": "7ae1459e1fb18cd61ed9a4f56b0e6bd6711592fd",
+  "environment": {
+    "os": "Linux",
+    "arch": "x86_64",
+    "node": "24.19.0",
+    "npm": "11.9.0"
+  },
+  "sourceSha256": {
+    "website/index.html": "87c4966fb870a5428a1198ae0c85c3b4b0c28372d228505b4ce384aede742410",
+    "website/styles.css": "6ccc479c1a4e88a218ba1f1ed57b6547bbaedfed60835f37d4b55344be81fabf",
+    "website/site.js": "e4b8836fbc20589f4499d44e4f469de62e24161202b36a9bee8eb8be5f522b97",
+    "website/mark.svg": "f95ac69a8a32a77db0c2a7764827866cf7c6d6712f5496f52d6fffa00b42f486",
+    "website/qa.py": "e55fab52544bc45413fa29f92406f7e7b6643691364909779fcfca8c084945de",
+    "scripts/site.mjs": "53536d2478043d9d241b63af04cd64a1f587007405874318348f1466f88d9889"
+  },
+  "checks": {
+    "siteBuild": "passed",
+    "siteLinks": 30,
+    "uniqueHtmlIds": 19,
+    "javascriptSyntax": "passed",
+    "exampleTypes": "passed",
+    "exampleLint": "passed with EXPO_NO_TELEMETRY=1",
+    "exampleSnapshots": {
+      "passed": 14
+    },
+    "exampleOfflineWebExport": "passed",
+    "cliInitDryRun": "passed; no writes",
+    "archiveDryRun": "passed; site excluded",
+    "fullContributorGate": "refused: requires macOS arm64",
+    "serialPackageTests": {
+      "total": 257,
+      "passed": 234,
+      "failed": 20,
+      "skipped": 3,
+      "failures": [
+        "a configured model passes doctor without inference until the explicit model check is requested",
+        "aborting managed authoring reaps its process and preserves public project state",
+        "an attempted but incomplete default model setup is a configuration failure without modifying its receipts",
+        "codex cancellation reaps a pending frontier request",
+        "codex discovery deadline and cancellation reap the metadata process",
+        "codex withheld response fails within its deadline and reaps its owned process",
+        "doctor omits an unconfigured optional model but fails an explicitly selected missing cache",
+        "explicit setup installs verified private assets, preserves reruns and checks content integrity",
+        "failed setup reruns preserve verified metadata and report their decision receipt path",
+        "fresh setup downloads its runtime and verifies a choice before publishing ready",
+        "incomplete setup reports its saved stage and failure without creating state",
+        "init creates the graph, check reports actual staleness, and refresh repairs it without tev1",
+        "model setup preview gives an executable next command that preserves its explicit cache literally",
+        "model setup previews and absent-cache checks create no files",
+        "native v2 model references accept only the pinned canonical blob inside the owned store",
+        "setup downloads and validates the exact pinned model tag in the native v2 store",
+        "setup preview/check and option rejection are read-only through the CLI",
+        "setup pulls only through its private server and the explicit model health check closes that server",
+        "setup refuses ready publication when verified files cannot answer a decision",
+        "wrong archive/model pins and unowned or symlink caches never report ready"
+      ]
+    },
+    "baseline": "same 20 failing names reproduced on unchanged base; focused run only",
+    "independentReview": "no blocking findings"
+  },
+  "unexecuted": [
+    "macOS installed-package isolation smoke locally",
+    "real provider/model inference",
+    "live browser/native app driving",
+    "Safari/Firefox/screen-reader/physical-device tests",
+    "publication/deployment/releases"
+  ]
+}

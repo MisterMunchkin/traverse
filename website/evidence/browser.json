@@ -1,0 +1,23 @@
+{
+  "testedAt": "2026-10-27T05:47:47.881041+00:00",
+  "browser": "Chromium 154.0.8037.57",
+  "url": "http://127.0.0.1:4173",
+  "checks": [
+    "320px: no horizontal overflow; navigation, heading and graph targets visible",
+    "390px: no horizontal overflow; navigation, heading and graph targets visible",
+    "768px: no horizontal overflow; navigation, heading and graph targets visible",
+    "1024px: no horizontal overflow; navigation, heading and graph targets visible",
+    "1440px: no horizontal overflow; navigation, heading and graph targets visible",
+    "Keyboard: skip link, visible focus, Enter/Space graph selection and disclosure open/close pass",
+    "Both copy buttons copy the exact displayed command block",
+    "All section destinations and direct model-setup deep link work",
+    "Reduced motion disables smooth scrolling",
+    "No browser console errors or uncaught JavaScript exceptions",
+    "No JavaScript: content, commands and native disclosures remain available; copy buttons hidden"
+  ],
+  "screenshots": [
+    "desktop.png",
+    "mobile.png"
+  ],
+  "limitations": "Emulated viewports in headless Chromium on Linux; no physical device, screen reader, Safari or Firefox testing. This validates the website, not Traverse live UI driving."
+}

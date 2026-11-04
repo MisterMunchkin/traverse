@@ -37,7 +37,7 @@ export function inventory() {
     }
     else result[relative.split(path.sep).join('/')] = {sha256: hash(fs.readFileSync(file)), executable: !!(stat.mode & 0o111)};
   }
-  for (const name of ['src', 'bin', 'test', 'fixtures', 'scripts', 'docs', 'examples/expo', '.github', '.nvmrc', 'package.json', 'npm-shrinkwrap.json', 'README.md', 'LICENSE', 'CONTRIBUTING.md', 'AGENTS.md', '.gitignore', 'install.sh']) visit(name);
+  for (const name of ['src', 'bin', 'test', 'fixtures', 'scripts', 'docs', 'website', 'examples/expo', '.github', '.nvmrc', 'package.json', 'npm-shrinkwrap.json', 'README.md', 'LICENSE', 'CONTRIBUTING.md', 'AGENTS.md', '.gitignore', 'install.sh']) visit(name);
   return result;
 }
 export function checks(name, requested) {
