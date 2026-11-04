@@ -57,7 +57,7 @@ export function referenceArtifact(request) {
 }
 export function bundledArtifact(request){return request.compatibility.profile==='expo-source-inventory/1'?referenceArtifact(request):null;}
 function artifactFor(compatible) {
-  return {schema: 'extractor-artifact/1', compatibility: compatible, entrypoint: 'extract.mjs', dependencies: {reference: CONTRACT, typescript: '6.0.3'}, coverage: 'partial-static-source', unsupported: ['runtime visibility', 'business/API effects', 'unresolved dynamic targets', 'history-dependent targets', 'imperative helper call graph'], files: {'extract.mjs': `import fs from 'node:fs';\nconst {extractNavigationSource}=await import(process.env.EXTRACTOR_REFERENCE_URL);\nprocess.stdout.write(JSON.stringify(extractNavigationSource(JSON.parse(fs.readFileSync(0,'utf8'))${compatible.profile==='expo-source-inventory/1'?'':','+JSON.stringify(extractionOptions(compatible))})));\n`}};
+  return {schema: 'extractor-artifact/1', compatibility: compatible, entrypoint: 'extract.mjs', dependencies: {reference: CONTRACT, typescript: '6.0.3'}, coverage: 'partial-static-source', unsupported: ['runtime visibility', 'business/API effects', 'unresolved dynamic targets', 'history-dependent targets', 'imperative helper call graph'], files: {'extract.mjs': `import fs from 'node:fs';\nconst {extractNavigationSource}=await import(process.env.EXTRACTOR_REFERENCE_URL);\ntry {\nprocess.stdout.write(JSON.stringify(extractNavigationSource(JSON.parse(fs.readFileSync(0,'utf8'))${compatible.profile==='expo-source-inventory/1'?'':','+JSON.stringify(extractionOptions(compatible))})));\n} catch (error) {\nconsole.error(JSON.stringify({error: error.message.split('\\n')[0], name: error.name, code: error.code ?? null}));\nprocess.exitCode = 1;\n}\n`}};
 }
 export function review(a, reviewer, acknowledgement) {
   text(reviewer, 'reviewer'); assert.equal(acknowledgement, 'I reviewed these bytes and trust host execution', 'explicit host trust acknowledgement required');
@@ -76,8 +76,8 @@ export function environmentIdentity() {
   const require = createRequire(new URL('../../package.json', import.meta.url));
   const tsPackage = require.resolve('typescript/package.json'), ts = read(tsPackage);
   assert.equal(ts.version, '6.0.3', 'reference dependency mismatch');
-  const paths = ['src/source/navigation.mjs', 'src/source/ast.mjs', 'package.json', 'npm-shrinkwrap.json', 'src/runtime/process.mjs', 'src/project-profile.mjs'];
-  return {node: process.version, platform: process.platform, arch: process.arch, dependencies: {typescript: {version: ts.version, treeHash: digest(treeHashes(path.dirname(tsPackage)))}}, reference: Object.fromEntries(paths.map(p => [p, sha(fs.readFileSync(path.join(root, p)))])), pipeline: Object.fromEntries(['contract.mjs', 'fixtures.mjs', 'pipeline.mjs', 'validate-worker.mjs','profiles.mjs'].map(p => [p, sha(fs.readFileSync(path.join(here, p)))]))};
+  const paths = ['src/source/navigation.mjs', 'src/source/ast.mjs', 'package.json', 'npm-shrinkwrap.json', 'src/runtime/process.mjs', 'src/project-profile.mjs', 'src/project-next.mjs', 'src/source/next.mjs'];
+  return {node: process.version, platform: process.platform, arch: process.arch, dependencies: {typescript: {version: ts.version, treeHash: digest(treeHashes(path.dirname(tsPackage)))}}, reference: Object.fromEntries(paths.map(p => [p, sha(fs.readFileSync(path.join(root, p)))])), pipeline: Object.fromEntries(['contract.mjs', 'fixtures.mjs', 'pipeline.mjs', 'validate-worker.mjs','profiles.mjs','fixtures-next.mjs'].map(p => [p, sha(fs.readFileSync(path.join(here, p)))]))};
 }
 async function command(command, args, options, recordPath) {
   const startedAt = new Date().toISOString(), start = performance.now();

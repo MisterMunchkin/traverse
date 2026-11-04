@@ -15,8 +15,8 @@ Agents should read [AGENTS.md](../AGENTS.md) and the repo-local [traverse-mainta
 | Area | Starting points | Responsibility |
 | --- | --- | --- |
 | Commands/output | [bin/](../bin/), [presentation](../src/presentation.mjs), [wizard](../src/setup-wizard.mjs) | Dispatch, flags, help, human/JSON output and guided setup. |
-| Project inputs | [project](../src/project.mjs), [extended Expo profile](../src/project-profile.mjs) | Bounded static config, installed/locked versions and source snapshots. |
-| Extraction | [navigation](../src/source/navigation.mjs), [AST](../src/source/ast.mjs) | One implementation of partial TypeScript source navigation facts. |
+| Project inputs | [project](../src/project.mjs), [extended Expo profile](../src/project-profile.mjs), [Next profile](../src/project-next.mjs) | Bounded static config, installed/locked versions and source snapshots. |
+| Extraction | [navigation](../src/source/navigation.mjs), [AST](../src/source/ast.mjs), [Next parsing](../src/source/next.mjs) | One implementation of partial TypeScript source navigation facts. |
 | Reviewed extractors | [pipeline](../src/extractor-pipeline/pipeline.mjs), [contract](../src/extractor-pipeline/contract.mjs), [profiles](../src/extractor-pipeline/profiles.mjs), [worker](../src/extractor-pipeline/validate-worker.mjs) | Hash review, independent conformance/current-source validation, acceptance and refresh. |
 | Authoring | [adapter init](../src/adapter-init.mjs) | Tool-owned prompts, bounded drafts and explicit trust before publication. |
 | Repository graph | [graph](../src/graph.mjs) | Fingerprint bindings, atomic publication, staleness and watchers. |
@@ -47,7 +47,7 @@ Only exports declared in [package.json](../package.json) are package entrypoints
 
 ## Current support and limits
 
-Extraction supports the two host-owned Expo 57/Router 57 [profiles](adapters.md#first-supported-profiles). The original uses a bundled reference; the extended static profile can require generated, reviewed code. Another framework needs host-owned compatibility rules, independent validation and fixtures first. App config is inspected statically, never executed.
+Extraction supports the two host-owned Expo 57/Router 57 [profiles](adapters.md#first-supported-profiles) and the bounded [Next16.0/React19.2 App Router profile](adapters.md#next-app-router-first-slice). The original uses a bundled reference; the extended static profile can require generated, reviewed code. Another framework needs host-owned compatibility rules, independent validation and fixtures first. App config is inspected statically, never executed.
 
 The driving policy receives the shared graph, fresh UI, goal/inputs and the last eight actions. Local choice uses margin 0.819, confidence floor 0, an estimated 1,500-token ceiling and 23-control limit with frontier escalation. These are fixture-derived defaults, not native safety calibration. Change them through explicit experiments and outcome accounting.
 

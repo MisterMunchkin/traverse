@@ -7,7 +7,7 @@ import {fileURLToPath} from 'node:url';
 import {runProcess} from '../src/runtime/process.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-for (const implementation of ['graph.mjs', 'project.mjs', 'project-profile.mjs', 'state.mjs']) test(`graph identity and publication bind ${implementation} implementation bytes`, async t => {
+for (const implementation of ['graph.mjs', 'project.mjs', 'project-profile.mjs', 'project-next.mjs', 'state.mjs']) test(`graph identity and publication bind ${implementation} implementation bytes`, async t => {
   const parent = process.env.INSTALLER_TEST_EVIDENCE ?? fs.realpathSync(os.tmpdir()); fs.mkdirSync(parent, {recursive: true});
   const dir = fs.mkdtempSync(path.join(parent, 'generator-identity-')), copied = path.join(dir, 'package'), project = path.join(dir, 'expo');
   fs.mkdirSync(copied); fs.mkdirSync(project);

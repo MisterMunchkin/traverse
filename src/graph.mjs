@@ -14,7 +14,7 @@ const validator = fileURLToPath(new URL('./extractor-pipeline/validate-worker.mj
 const paths = root => ({folder: path.join(root, '.wayfinder'), local: path.join(root, '.wayfinder/local'), artifact: path.join(root, '.wayfinder/extractor/artifact.json'), graph: path.join(root, '.wayfinder/graph.json')});
 function bindings(project, artifact, environment) {
   return {sourceFingerprint: project.provenance.sourceFingerprint, configuration: digest(project.config), routingInputs: project.provenance.inputHashes,
-    extractor: artifactHash(artifact), generator: {dependencies: environment.dependencies, reference: environment.reference, pipeline: environment.pipeline, lifecycle: Object.fromEntries(['graph.mjs', 'project.mjs', 'project-profile.mjs', 'state.mjs'].map(name => [name, sha(fs.readFileSync(new URL(name, import.meta.url)))]))}};
+    extractor: artifactHash(artifact), generator: {dependencies: environment.dependencies, reference: environment.reference, pipeline: environment.pipeline, lifecycle: Object.fromEntries(['graph.mjs', 'project.mjs', 'project-profile.mjs', 'project-next.mjs', 'state.mjs'].map(name => [name, sha(fs.readFileSync(new URL(name, import.meta.url)))]))}};
 }
 // Init supplies an independently validated inventory before publishing any public project state.
 export function prepareGraphPublication(project,artifact,inventory){
@@ -90,14 +90,14 @@ export async function refreshGraph({project = process.cwd(), accepted: acceptedF
 
 export async function watchGraph({project = process.cwd(), signal, debounceMs = 150, onEvent = () => {}} = {}) {
   const root = path.resolve(project);
-  const inspected=projectStatus(root),modern=inspected.config.profile==='expo-source-inventory/2';
+  const inspected=projectStatus(root),modern=inspected.config.profile!=='expo-source-inventory/1';
   // Keep source subscriptions stable: adding child watches can restart native streams.
   const sourceRoots=modern?[...new Set([...inspected.provenance.includedDirectories,...Object.values(inspected.config.routing.config.aliases).map(values=>values[0].replace(/^\.\//,'').slice(0,-2)).filter(s=>s&&s!=='.')].map(s=>s.split('/')[0]))]:['app','components'];
   if (!Number.isInteger(debounceMs) || debounceMs < 1 || debounceMs > 10000) throw Error('Invalid watch debounce');
   if (signal?.aborted) return {schema: 'wayfinder-graph-watch/1', stopped: true};
   projectStatus(root);
   const cancellation = new AbortController(), combined = signal ? AbortSignal.any([signal, cancellation.signal]) : cancellation.signal;
-  const inputNames = new Set([...sourceRoots.map(s=>s.split('/')[0]),'app', 'components', 'src', 'node_modules', 'package.json', 'package-lock.json', 'app.json', 'tsconfig.json', 'app.config.js', 'app.config.ts', 'app.config.mjs', 'app.config.cjs', 'metro.config.js', 'metro.config.cjs', 'metro.config.mjs', 'babel.config.js', 'babel.config.cjs']);
+  const inputNames = new Set([...sourceRoots.map(s=>s.split('/')[0]),'app', 'components', 'src', 'node_modules', 'package.json', 'package-lock.json', 'app.json', 'tsconfig.json', 'app.config.js', 'app.config.ts', 'app.config.mjs', 'app.config.cjs', 'metro.config.js', 'metro.config.cjs', 'metro.config.mjs', 'babel.config.js', 'babel.config.cjs', 'jsconfig.json', 'next.config.js', 'next.config.mjs', 'next.config.ts', 'next.config.cjs', 'pages', 'middleware.ts', 'middleware.js', 'proxy.ts', 'proxy.js']);
   const watchers = new Map(); let timer, busy = false, dirty = false, closed = false, failure;
   return new Promise((resolve, reject) => {
     function finish() { if (!busy && closed) { signal?.removeEventListener('abort', abort); if (failure) reject(failure); else resolve({schema: 'wayfinder-graph-watch/1', stopped: true}); } }
@@ -107,7 +107,7 @@ export async function watchGraph({project = process.cwd(), signal, debounceMs = 
     function syncWatchers() {
       const desired = new Map([[root, false]]);
       let changed = false;
-      for (const name of [...sourceRoots, 'app', 'components', 'src', 'node_modules', 'node_modules/expo', 'node_modules/expo-router', '.wayfinder', '.wayfinder/extractor']) {
+      for (const name of [...sourceRoots, 'app', 'components', 'src', 'node_modules', 'node_modules/expo', 'node_modules/expo-router', 'node_modules/next', 'node_modules/react', 'node_modules/react-dom', '.wayfinder', '.wayfinder/extractor']) {
         const dir = path.join(root, name);
         try { noSymlinks(dir); if (exists(dir) && fs.statSync(dir).isDirectory()) desired.set(dir, sourceRoots.includes(name) || name === 'app' || name === 'components' || modern && name==='src'); } catch { /* refresh reports invalid inputs */ }
       }
@@ -119,7 +119,7 @@ export async function watchGraph({project = process.cwd(), signal, debounceMs = 
             if (dir === root && name && !inputNames.has(name)) return;
             if (!modern && dir === path.join(root, 'src') && name && name !== 'app') return;
             if (dir === path.join(root, '.wayfinder') && name && name !== 'project.json' && name !== 'extractor') return;
-            if (dir === path.join(root, 'node_modules') && name && !['expo', 'expo-router'].includes(name)) return;
+            if (dir === path.join(root, 'node_modules') && name && !['expo', 'expo-router', 'next', 'react', 'react-dom'].includes(name)) return;
             syncWatchers(); queue();
           });
           watcher.on('error', () => { watcher.close(); watchers.delete(dir); queue(); }); watchers.set(dir, watcher); changed = true;

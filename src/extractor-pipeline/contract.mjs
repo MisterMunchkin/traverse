@@ -34,13 +34,26 @@ export const sourceFingerprint = files => sha(JSON.stringify(manifest(files)));
 export function compatibility(spec) {
   object(spec, ['framework', 'routing', 'contract', 'profile', 'source']);
   object(spec.framework, ['package', 'version']);
-  assert.equal(spec.framework.package, 'expo-router', 'unsupported framework: new profile/conformance required');
+  const next=spec.profile==='next-app-source-inventory/1';
+  assert.equal(spec.framework.package, next?'next':'expo-router', 'unsupported framework: new profile/conformance required');
   assert.match(spec.framework.version, /^\d+\.\d+\.\d+(?:-[\w.-]+)?$/, 'exact framework version required');
   assert.deepEqual(spec.contract, CONTRACT, 'unsupported graph contract; prepare a fresh Traverse request and review the new artifact');
-  assert.ok([PROFILE,'expo-source-inventory/2'].includes(spec.profile), 'unsupported profile: independent conformance required');
+  assert.ok([PROFILE,'expo-source-inventory/2','next-app-source-inventory/1'].includes(spec.profile), 'unsupported profile: independent conformance required');
   object(spec.routing, ['config', 'conventions']);
   assert.ok(spec.routing.config && typeof spec.routing.config === 'object' && !Array.isArray(spec.routing.config), 'routing config object required');
-  if(spec.profile===PROFILE) assert.deepEqual(spec.routing.conventions, {routeRoot: 'app', componentAlias: '@/'}, 'unsupported conventions');
+  if(next){
+    assert.match(spec.framework.version,/^16\.0\.\d+$/,'unsupported Next version');
+    object(spec.routing.conventions,['routeRoot']);assert.ok(['app','src/app'].includes(spec.routing.conventions.routeRoot),'unsupported route root');
+    object(spec.routing.config,['aliases','versions']);
+    assert.deepEqual(spec.routing.config.versions,{next:spec.framework.version,react:spec.routing.config.versions.react,'react-dom':spec.routing.config.versions.react});
+    assert.match(spec.routing.config.versions.react,/^19\.2\.\d+$/,'unsupported React version');
+    const aliases=spec.routing.config.aliases;assert.ok(aliases&&typeof aliases==='object'&&!Array.isArray(aliases),'static aliases required');
+    const keys = Object.keys(aliases);
+    const overlapping = keys.some(a => keys.some(b => a !== b && a.startsWith(b.slice(0, -1))));
+    assert.ok(!overlapping, 'overlapping aliases are unsupported');
+    for(const [key,values]of Object.entries(aliases)){assert.match(key,/^[\w@/-]+\/\*$/,'unsupported alias');assert.ok(Array.isArray(values)&&values.length===1&&typeof values[0]==='string'&&(values[0]==='./*'||/^(?:\.\/)?[\w-]+(?:\/[\w-]+)*\/\*$/.test(values[0]))&&!values[0].split('/').includes('..'),'unsupported alias target');}
+  }
+  else if(spec.profile===PROFILE) assert.deepEqual(spec.routing.conventions, {routeRoot: 'app', componentAlias: '@/'}, 'unsupported conventions');
   else { assert.ok(['app','src/app'].includes(spec.routing.conventions.routeRoot),'unsupported route root'); assert.equal(spec.routing.conventions.componentAlias,'@/'); assert.ok(spec.routing.config.aliases&&typeof spec.routing.config.aliases==='object','static aliases required'); }
   object(spec.source, ['revision', 'files']); text(spec.source.revision, 'source revision'); validateFiles(spec.source.files);
   return {framework: spec.framework, routing: spec.routing, contract: spec.contract, profile: spec.profile};
@@ -51,8 +64,10 @@ const nullableText = x => assert.ok(x === null || typeof x === 'string', 'nullab
 const url = id => '/' + id.split('/').filter(p => p && !/^\(.*\)$/.test(p)).join('/');
 const role = id => id.split('/').find(p => ['provider', 'client', '(provider)', '(client)'].includes(p))?.replace(/[()]/g, '') ?? null;
 const matches = (a, b) => { const x = a.split('/').filter(Boolean), y = b.split('/').filter(Boolean); return x.length === y.length && x.every((p, i) => p === y[i] || /^\[.+\]$/.test(y[i]) || /^\[.+\]$/.test(p) || p.includes('${')); };
-export function validateGraph(g, files, {routeRoot="app"}={}) {
-  const routeId=file=>"/"+file.slice(routeRoot.length+1).replace(/\.[jt]sx?$/,"").replace(/(^|\/)index$/,"").replace(/\/$/,"");
+export function validateGraph(g, files, {routeRoot="app",profile}={}) {
+  const next=profile==='next-app-source-inventory/1';
+  const isRoute=file=>file.startsWith(routeRoot+'/')&&(next?/\/page\.[jt]sx?$/.test(file)&&!file.slice(routeRoot.length+1).split('/').some(p=>/^[_@]/.test(p)||/^\(\./.test(p)):!/(^|\/)(?:_|\+)/.test(file.slice(routeRoot.length+1)));
+  const routeId=file=>next?("/"+file.slice(routeRoot.length+1).replace(/(?:^|\/)page\.[jt]sx?$/,'')):"/"+file.slice(routeRoot.length+1).replace(/\.[jt]sx?$/,"").replace(/(^|\/)index$/,"").replace(/\/$/,"");
   object(g, ['schema', 'schemaVersion', 'parser', 'sourceFingerprint', 'files', 'nodes', 'registrations', 'sites', 'edges', 'unresolved', 'coverage', 'limits', 'stats'], [], 'inventory');
   assert.equal(g.schema, CONTRACT.schema, 'schema mismatch'); assert.equal(g.schemaVersion, CONTRACT.schemaVersion, 'schema version mismatch'); assert.equal(g.coverage, 'partial-static-source', 'unsupported capability');
   assert.equal(g.parser, 'typescript@6.0.3', 'parser identity');
@@ -75,11 +90,11 @@ export function validateGraph(g, files, {routeRoot="app"}={}) {
   const ids = new Set();
   for (const n of g.nodes) {
     object(n, ['id', 'url', 'file', 'role', 'registrations', 'guards'], ['title'], 'node');
-    assert.ok(Object.hasOwn(files, n.file) && n.file.startsWith(routeRoot+'/') && !/(^|\/)(?:_|\+)/.test(n.file.slice(routeRoot.length+1)), 'fabricated route file');
-    assert.equal(n.id, routeId(n.file), 'fabricated route identity'); assert.equal(n.url, url(n.id), 'fabricated route URL'); assert.equal(n.role, role(n.id));
+    assert.ok(Object.hasOwn(files, n.file) && isRoute(n.file), 'fabricated route file');
+    assert.equal(n.id, routeId(n.file), 'fabricated route identity'); assert.equal(n.url, url(n.id), 'fabricated route URL'); assert.equal(n.role, next?null:role(n.id));
     assert.ok(!ids.has(n.id), 'duplicate node'); ids.add(n.id); array(n.registrations, 'registrations'); n.registrations.forEach(registration); conditions(n.guards); if (n.title !== undefined) text(n.title);
   }
-  const expectedIds = Object.keys(files).filter(f => f.startsWith(routeRoot+'/') && !/(^|\/)(?:_|\+)/.test(f.slice(routeRoot.length+1))).map(routeId).sort();
+  const expectedIds = Object.keys(files).filter(f => isRoute(f)).map(routeId).sort();
   assert.deepEqual([...ids].sort(), expectedIds, 'missing/fabricated routes');
   g.registrations.forEach(registration);
   const common = e => {
@@ -91,7 +106,25 @@ export function validateGraph(g, files, {routeRoot="app"}={}) {
   };
   const action = e => { text(e.target); conditions(e.conditions); nullableText(e.label); bool(e.pureNavigation); assert.ok(['action', 'redirect'].includes(e.kind)); if (e.disabled !== undefined) { object(e.disabled, ['kind'], ['value', 'text', 'pattern', 'regex', 'captures']); assert.ok(['literal', 'expr', 'template'].includes(e.disabled.kind)); } };
   const endpoints = target => g.nodes.filter(n => matches(target, target.split('/').some(p => /^\(.+\)$/.test(p)) ? n.id : n.url));
-  const candidates = e => { let ns = endpoints(e.target); const ownerRole = role(e.owner); if (ns.length > 1 && ownerRole) { const same = ns.filter(n => n.role === ownerRole); if (same.length) ns = same; } return ns.map(n => n.id).sort(); };
+  const candidates = e => {
+    if(next){
+      const pathname=e.target.split(/[?#]/)[0],segments=pathname.split('/').filter(Boolean);
+      const ranked=g.nodes.flatMap(n=>{
+        const parts=n.url.split('/').filter(Boolean);let rank='',i=0;
+        for(;i<parts.length;i++){
+          if(/^\[\[\.\.\.[\w-]+\]\]$/.test(parts[i])){rank+='1';break;}
+          if(/^\[\.\.\.[\w-]+\]$/.test(parts[i])){if(segments.length<=i)return [];rank+='2';break;}
+          if(segments[i]===undefined)return [];
+          if(/^\[[\w-]+\]$/.test(parts[i]))rank+='3';
+          else if(parts[i]===segments[i])rank+='4';else return [];
+        }
+        if(i===parts.length){if(i!==segments.length)return [];rank+='5';}
+        return [[n.id,rank]];
+      });
+      const best=ranked.map(([,rank])=>rank).sort().at(-1);
+      return ranked.filter(([,rank])=>rank===best).map(([id])=>id).sort();
+    }
+    let ns = endpoints(e.target); const ownerRole = role(e.owner); if (ns.length > 1 && ownerRole) { const same = ns.filter(n => n.role === ownerRole); if (same.length) ns = same; } return ns.map(n => n.id).sort(); };
   const edgeIds = new Set();
   for (const e of g.edges) {
     object(e, ['id', 'from', 'to', 'owner', 'componentPath', 'source', 'method', 'expression', 'target', 'conditions', 'label', 'pureNavigation', 'kind'], ['disabled'], 'edge');
@@ -104,7 +137,7 @@ export function validateGraph(g, files, {routeRoot="app"}={}) {
     object(e, ['owner', 'componentPath', 'source', 'method', 'expression', 'reason'], ['target', 'conditions', 'label', 'pureNavigation', 'kind', 'disabled', 'candidates'], 'unresolved'); common(e);
     assert.ok(['history-dependent', 'dynamic-target', 'ambiguous-route', 'missing-route', 'relative-target', 'external-target'].includes(e.reason), 'uncertainty reason');
     if (['history-dependent', 'dynamic-target'].includes(e.reason)) { assert.equal(e.target, undefined, 'uncertain target must remain unresolved'); assert.equal(['back', 'dismiss', 'dismissAll'].includes(e.method), e.reason === 'history-dependent'); }
-    else { action(e); array(e.candidates, 'unresolved candidates'); assert.ok(e.candidates.every(id => ids.has(id)), 'unresolved endpoint'); if (e.reason === 'ambiguous-route') { assert.ok(candidates(e).length > 1); assert.deepEqual([...e.candidates].sort(), candidates(e)); } }
+    else { action(e); array(e.candidates, 'unresolved candidates'); assert.ok(e.candidates.every(id => ids.has(id)), 'unresolved endpoint'); if(next){const reason=!e.target.startsWith('/')||e.target.startsWith('//')?(/^(?:[a-z]+:|\/\/)/i.test(e.target)?'external-target':'relative-target'):candidates(e).length>1?'ambiguous-route':'missing-route';assert.equal(e.reason,reason,'uncertainty classification');assert.deepEqual(e.candidates,reason==='ambiguous-route'?candidates(e):[],'uncertainty endpoints');} if (e.reason === 'ambiguous-route') { assert.ok(candidates(e).length > 1); assert.deepEqual([...e.candidates].sort(), candidates(e)); } }
   }
   for (const s of g.sites) {
     object(s, ['file', 'kind', 'method', 'targets', 'expression', 'conditions', 'source', 'label', 'pureNavigation'], ['disabled'], 'site');
