@@ -43,7 +43,7 @@ export function normalizeObservation(data, {target = null, id = randomUUID()} = 
     }
   }
   const overlays = nodes.filter(n => n.visible && ['alert', 'dialog'].includes(n.role));
-  if (target?.platform !== 'web' && target?.app?.includes('.') && data.appBundleId && !overlays.length)
+  if (target?.platform !== 'web' && target?.app?.includes('.') && data.appBundleId)
     need(data.appBundleId === target.app, 'Snapshot belongs to another app', 'INVALID_OBSERVATION');
   function beneath(node, ancestor) {
     const seen = new Set();

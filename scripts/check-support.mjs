@@ -9,8 +9,8 @@ import {noSymlinks} from '../src/installation.mjs';
 export const root = fs.realpathSync(fileURLToPath(new URL('../', import.meta.url)));
 export const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 export const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
-export function options(help) {
-  const {values} = parseArgs({options: {out: {type: 'string'}, help: {type: 'boolean'}}});
+export function options(help, additional = {}) {
+  const {values} = parseArgs({options: {out: {type: 'string'}, help: {type: 'boolean'}, ...additional}});
   if (values.help) { console.log(help); return null; }
   if (values.out !== undefined && !values.out.trim()) throw Error('--out needs a fresh report directory');
   return values;
@@ -37,7 +37,7 @@ export function inventory() {
     }
     else result[relative.split(path.sep).join('/')] = {sha256: hash(fs.readFileSync(file)), executable: !!(stat.mode & 0o111)};
   }
-  for (const name of ['src', 'bin', 'test', 'fixtures', 'scripts', 'docs', 'examples/expo', '.github', '.nvmrc', 'package.json', 'npm-shrinkwrap.json', 'README.md', 'LICENSE', 'CONTRIBUTING.md', 'AGENTS.md', '.gitignore', 'install.sh']) visit(name);
+  for (const name of ['src', 'bin', 'test', 'fixtures', 'scripts', 'docs', 'website', 'examples/expo', '.github', '.nvmrc', 'package.json', 'npm-shrinkwrap.json', 'README.md', 'SECURITY.md', 'LICENSE', 'CONTRIBUTING.md', 'AGENTS.md', '.gitignore', 'install.sh']) visit(name);
   return result;
 }
 export function checks(name, requested) {

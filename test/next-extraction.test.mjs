@@ -1,3 +1,4 @@
+import './support/isolated-approval-state.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -14,10 +15,10 @@ import {createRequest, referenceArtifact, accept, refresh, review, artifactHash,
 import {checkGraph, refreshGraph, watchGraph} from '../src/graph.mjs';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const write = (root, name, value) => { fs.mkdirSync(path.dirname(path.join(root, name)), {recursive: true}); fs.writeFileSync(path.join(root, name), typeof value === 'string' ? value : JSON.stringify(value)); };
-function fixture(t, routeRoot = 'app') {
+function fixture(t, routeRoot = 'app', nextVersion = '16.0.11') {
   const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'traverse-next-')));
   t.after(() => fs.rmSync(dir, {recursive: true, force: true}));
-  const dependencies = {next: '16.0.11', react: '19.2.9', 'react-dom': '19.2.9'};
+  const dependencies = {next: nextVersion, react: '19.2.9', 'react-dom': '19.2.9'};
   write(dir, 'package.json', {dependencies});
   write(dir, 'package-lock.json', {lockfileVersion: 3, packages: {'': {dependencies}, ...Object.fromEntries(Object.entries(dependencies).map(([name, version]) => ['node_modules/' + name, {version}]))}});
   for (const [name, version] of Object.entries(dependencies)) write(dir, `node_modules/${name}/package.json`, {name, version});
@@ -303,4 +304,16 @@ test('Next watch refreshes accepted code and reports unsupported config as stale
   assert.deepEqual(events.map(e => e.status), ['ready', 'ready', 'stale']);
   assert.ok(events.slice(0, 2).every(e => e.authorCalls === 0));
   assert.deepEqual(fs.readFileSync(saved), valid);
+});
+
+for (const routeRoot of ['app', 'src/app']) test(`Next16.4 ${routeRoot}: patched fixture retains independent routing conformance`, t => {
+  const dir = fixture(t, routeRoot, '16.4.6'), project = inspectProject(dir);
+  assert.equal(project.provenance.versions.next, '16.4.6');
+  assert.equal(project.config.profile, 'next-app-source-inventory/1');
+  const options = extractionOptions(createRequest(project.spec).compatibility);
+  for (const c of nextCases(routeRoot)) {
+    const graph = extractNavigationSource(c.files, options);
+    nextFacts(validateGraph(graph, c.files, options), c);
+  }
+  assert.equal(fs.existsSync(path.join(dir, '.wayfinder')), false);
 });

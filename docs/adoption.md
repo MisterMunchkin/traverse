@@ -28,7 +28,7 @@ traverse graph check
 traverse graph watch
 ```
 
-The original `expo-source-inventory/1` profile covers the static SDK57/root-app example and uses a bundled extractor. `expo-source-inventory/2` adds the supported extended static Expo57 inputs, including `src/app` and static app config. See [supported profiles](adapters.md#first-supported-profiles) for exact conditions, exclusions and the generated-adapter path. `next-app-source-inventory/1` adds the bounded Next16.0/React19.2 App Router slice, with direct pages/layouts, declared navigation and explicit uncertainty; see the [compatibility matrix](adapters.md#next-app-router-first-slice). React Router and Next Pages Router remain deferred. Other routers require host-owned compatibility rules, validation and fixtures before an adapter can be accepted. No project configuration is executed to infer compatibility.
+The original `expo-source-inventory/1` profile covers the static SDK57/root-app example and uses a bundled extractor. `expo-source-inventory/2` adds the supported extended static Expo57 inputs, including `src/app` and static app config. See [supported profiles](adapters.md#first-supported-profiles) for exact conditions, exclusions and the generated-adapter path. `next-app-source-inventory/1` adds the bounded Next16.0 or 16.4/React19.2 App Router slice, with direct pages/layouts, declared navigation and explicit uncertainty; see the [compatibility matrix](adapters.md#next-app-router-first-slice). React Router and Next Pages Router remain deferred. Other routers require host-owned compatibility rules, validation and fixtures before an adapter can be accepted. No project configuration is executed to infer compatibility.
 
 Init creates portable `.wayfinder/project.json`, `.wayfinder/extractor/artifact.json` and `.wayfinder/graph.json`; the wizard can save `.wayfinder/settings.json` and shared agent guidance. Commit those portable outputs. Local execution trust, failure receipts, sessions and recordings stay ignored. Compatible reruns preserve config bytes. `--project DIRECTORY` selects an explicit app; it does not search sibling checkouts. Read-only `--check` and `--dry-run` do not generate or execute candidates or write staging state.
 
@@ -106,3 +106,9 @@ Retain acceptance and adjacent execution/conformance receipts. Acceptance binds 
 Low-level `author` additionally accepts an explicitly configured executable that receives `{request, execution, previousDiagnostic}` on stdin and emits artifact JSON on stdout. The request includes a complete template and the host-owned validation definition. A custom command must retain actual provider/model/effort receipts: declared identity is not attestation. Consult `node bin/extractor-pipeline.mjs author --help` for the command interface; [managed init](adapters.md) already supplies the built-in provider path for supported profiles.
 
 Authors/extractors have host authority. Source-as-JSON, reduced environments, working directories and deadlines are not isolation against malicious filesystem/network access. Review records acknowledge local trust, not a cryptographic signature. Untrusted code needs separately provisioned isolation before importing reviewed bytes. No automatic approval or universal-framework claim is implied.
+
+## Security guidelines
+
+Read the [security guidelines](security.md) before using real application data.
+The supported trial scope is trusted local development with synthetic data;
+local model access and browser destination containment have documented limits.

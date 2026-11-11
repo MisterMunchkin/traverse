@@ -47,7 +47,7 @@ function validateConfig(config) {
   for (const value of Object.values(config.tools)) ensure(value === null || absolute(value), 'Optional tool paths must be absolute paths or null');
   return config;
 }
-const ownSources = ['install.sh', 'bin/install.mjs', 'bin/traverse.mjs', 'bin/extractor-pipeline.mjs', 'bin/setup.mjs', 'bin/init.mjs', 'src/project-profile.mjs','src/adapter-init.mjs','src/project-defaults.mjs', 'src/agent-integration.mjs', 'src/skills/traverse.md', 'bin/graph.mjs', 'bin/driving.mjs', 'src/installation.mjs', 'src/project.mjs', 'src/presentation.mjs', 'src/state.mjs', 'src/graph.mjs', 'src/model-setup.mjs', 'src/model-pins.json', 'src/runtime/ollama.mjs', 'src/settings.mjs', 'src/setup-wizard.mjs', 'src/frontier/provider.mjs', 'src/frontier/codex-worker.mjs', 'src/frontier/config.mjs', 'src/frontier/models.mjs', 'package.json', ...['contract', 'agent-device', 'sessions', 'choice', 'policy', 'loop'].map(name => 'src/driving/' + name + '.mjs')];
+const ownSources = ['install.sh', 'bin/install.mjs', 'bin/traverse.mjs', 'bin/extractor-pipeline.mjs', 'bin/setup.mjs', 'bin/init.mjs', 'src/project-profile.mjs','src/project-next.mjs','src/source/next.mjs','src/extractor-pipeline/fixtures-next.mjs','src/adapter-init.mjs','src/extractor-approval.mjs','src/private-state.mjs','src/project-defaults.mjs', 'src/agent-integration.mjs', 'src/skills/traverse.md', 'bin/graph.mjs', 'bin/driving.mjs', 'src/installation.mjs', 'src/project.mjs', 'src/presentation.mjs', 'src/state.mjs', 'src/graph.mjs', 'src/model-setup.mjs', 'src/model-pins.json', 'src/runtime/ollama.mjs', 'src/settings.mjs', 'src/setup-wizard.mjs', 'src/frontier/provider.mjs', 'src/frontier/codex-worker.mjs', 'src/frontier/config.mjs', 'src/frontier/models.mjs', 'package.json', ...['contract', 'agent-device', 'sessions', 'session-state', 'choice', 'policy', 'loop'].map(name => 'src/driving/' + name + '.mjs')];
 function sourceIdentity() {
   const environment = environmentIdentity();
   return {sources: Object.fromEntries(ownSources.map(p => [p, sha(fs.readFileSync(path.join(root, p)))])), reference: environment.reference, pipeline: environment.pipeline, dependencies: environment.dependencies};
@@ -123,7 +123,7 @@ export async function install(options = {}) {
     const npm = options.npm ?? findExecutable('npm'); executable(npm);
     fs.mkdirSync(path.join(prefix, 'logs'), {recursive: true});
     for (const name of ['npmrc', 'npm-globalrc']) if (!exists(path.join(prefix, name))) fs.writeFileSync(path.join(prefix, name), '', {flag: 'wx', mode: 0o600});
-    const args = ['ci', '--prefix', packageDir, '--ignore-scripts', '--no-audit', '--no-fund', '--cache', path.join(prefix, 'npm-cache'), '--userconfig', path.join(prefix, 'npmrc'), '--globalconfig', path.join(prefix, 'npm-globalrc')];
+    const args = ['ci', '--omit=dev', '--prefix', packageDir, '--ignore-scripts', '--no-audit', '--no-fund', '--cache', path.join(prefix, 'npm-cache'), '--userconfig', path.join(prefix, 'npmrc'), '--globalconfig', path.join(prefix, 'npm-globalrc')];
     const log = path.join(prefix, 'logs', 'npm-' + randomUUID() + '.json'); let record;
     try { record = await runProcess(npm, args, {cwd: packageDir, timeoutMs, maxBytes: 2 * 1024 * 1024, env: {PATH: path.dirname(process.execPath) + path.delimiter + (process.env.PATH ?? '')}}); }
     catch (e) { record = {...e.record, error: e.message}; }

@@ -8,6 +8,7 @@ import {directory, exists, readJson, atomicJson, withLock} from './state.mjs';
 import {sha, digest, canonical} from './extractor-pipeline/contract.mjs';
 import {createRequest, prepare, bundledArtifact, artifactHash, review, accept, refresh, environmentIdentity} from './extractor-pipeline/pipeline.mjs';
 import {runProcess} from './runtime/process.mjs';
+import {readExtractorApproval,writeExtractorApproval,preflightExtractorApproval} from './extractor-approval.mjs';
 
 const SCHEMA = 'wayfinder-repository-graph/1';
 const validator = fileURLToPath(new URL('./extractor-pipeline/validate-worker.mjs', import.meta.url));
@@ -63,8 +64,9 @@ export async function refreshGraph({project = process.cwd(), accepted: acceptedF
     if (acceptedFile) {
       accepted = readJson(path.resolve(acceptedFile));
       if (accepted.artifactHash !== hash) throw Error('Explicit reviewed acceptance does not match the repo extractor');
-    } else if (exists(cache)) accepted = readJson(cache);
-    else if (!isBuiltin) throw Error('Extractor requires explicit reviewed acceptance: inspect/review/accept it, then use graph refresh --accepted ACCEPTED.json');
+    } else if (!isBuiltin) accepted = readExtractorApproval({project: current.root, artifactHash: hash, compatibility: request.compatibility, environment});
+    if (!accepted && !isBuiltin) throw Error('Extractor requires explicit reviewed acceptance: inspect/review/accept it, then use graph refresh --accepted ACCEPTED.json');
+    if (!isBuiltin) preflightExtractorApproval({project: current.root, artifactHash: hash, compatibility: request.compatibility, environment});
     const runDir = path.join(location.local, 'runs', randomUUID()); directory(runDir);
     prepare(current.spec, path.join(runDir, 'request'));
     try {
@@ -81,6 +83,7 @@ export async function refreshGraph({project = process.cwd(), accepted: acceptedF
       if (digest(expected) !== digest(bindings(latest, latestArtifact, environmentIdentity()))) throw Error('Source or extractor changed during graph generation; previous graph preserved; retry refresh');
       const document = canonical({schema: SCHEMA, inputs: expected, inventory});
       directory(path.dirname(cache)); atomicJson(cache, accepted);
+      if (!isBuiltin) writeExtractorApproval({project: current.root, artifactHash: hash, compatibility: request.compatibility, environment}, accepted);
       atomicJson(location.graph, document);
       const result = {schema: 'wayfinder-graph-result/1', projectRoot: current.root, graph: location.graph, ready: true, graphHash: digest(document), sourceFingerprint: expected.sourceFingerprint, authorCalls: 0, coverage: inventory.coverage, exitCode: 0};
       atomicJson(path.join(runDir, 'result.json'), result); return result;

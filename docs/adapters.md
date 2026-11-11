@@ -19,7 +19,7 @@ The Expo milestone adds the managed authoring path and a host-owned profile regi
 
 | Input/pattern | Supported scope |
 | --- | --- |
-| Versions | Next **16.0.x**, React and React DOM **19.2.x** with matching React patch versions. Root `dependencies`, npm lockfile v2/v3 and installed package manifests must agree. Declarations are exact or tilde patch ranges; no caret, prerelease, workspace or alternative lockfile detection. Synthetic and live-server fixture pins: Next 16.0.11, React/React DOM 19.2.9. These are extraction compatibility claims, not all-version/runtime certification. |
+| Versions | Next **16.0.x or 16.4.x**, React and React DOM **19.2.x** with matching React patch versions. Root `dependencies`, npm lockfile v2/v3 and installed package manifests must agree. Declarations are exact or tilde patch ranges; no caret, prerelease, workspace or alternative lockfile detection. Legacy synthetic cases retain Next 16.0.11. The runnable fixture pins Next 16.4.6, React/React DOM 19.2.9. These are extraction compatibility claims, not all-version/runtime certification. |
 | Roots/files | Exactly one `app/` or `src/app/`, with a root `layout.js/jsx/ts/tsx`; direct function/arrow default exports (or a local function identifier). Only `page.js/jsx/ts/tsx` creates a node. Layouts contribute declared sites to descendant pages. Colocated helpers, route handlers and assets do not become screens. Private `_` folders do not create screens. |
 | Route paths | Static and nested paths, `(group)` identities with group-free URLs, `[id]`, terminal `[...slug]` and `[[...slug]]`. Parameter names stay in the existing node ID/URL pattern; no parameter value or auth state is invented. Literal paths select static segments before dynamic/catch-all segments. Conflicting group URLs remain ambiguous. |
 | Navigation | Default `next/link` imports (including renamed imports), `const router = useRouter()` and named aliases from `next/navigation`: `push`, `replace`, `back`, `redirect`, `permanentRedirect`. Link/redirect map to the existing `Link`/`Redirect` methods. Literal strings and conditionals with two statically resolved branches are supported. Query/fragment text is retained in the target; its pathname selects the route. |
@@ -47,6 +47,20 @@ traverse init --provider codex --model gpt-6.1-sol --effort medium --json
 For a missing adapter this returns exit1 with `ready:false`, the candidate path/hash and `adapter.resumeArgs`. Inspect the candidate, then run the printed init command with `--adapter FILE --trust-adapter SHA256`. Keep the same preference flags if you want those defaults saved. There is no scriptable blanket trust flag. `--adapter` without its matching hash prepares a review result and cannot execute the candidate. `--dry-run` and `--check` never author, execute candidates or write staging state.
 
 After acceptance, commit `.wayfinder/project.json`, `.wayfinder/extractor/artifact.json`, `.wayfinder/graph.json` and optional settings/guidance. Local host trust and execution receipts stay ignored. A clone can inspect a current graph without executing the adapter, but executing custom code on a new machine needs local exact-code trust again. Run `traverse init` to review the pinned adapter without generating it again. `graph refresh` and `graph watch` never invoke an author. Source changes use the same accepted deterministic code; changed framework/configuration, code, parser or validator identity requires compatibility review/reacceptance.
+
+Implicit custom-extractor execution grants live outside the repository in
+`$XDG_STATE_HOME/traverse/extractor-approvals`, or
+`~/.local/state/traverse/extractor-approvals` when `XDG_STATE_HOME` is unset.
+The state base must be an absolute owned path outside the app repository.
+Grant directories and files must remain private; unsafe ownership, writable
+ancestry, symlinks and linked grant files are refused. Grants bind the canonical
+project path, exact extractor bytes, compatibility and execution environment.
+Copying `.wayfinder/local/acceptances` does not transfer permission: those files
+are diagnostics. Existing repository-local receipts are not migrated into
+grants. Review the pinned custom adapter again with `traverse init`, or
+deliberately supply an explicit reviewed `graph refresh --accepted FILE`.
+After approval, compatible reruns and refresh reuse the private grant with zero
+author calls. Moving a checkout requires approval at its new canonical path.
 
 ## Loading and cancellation
 
