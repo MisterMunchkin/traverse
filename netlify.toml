@@ -1,0 +1,6 @@
+[build]
+  command = "node scripts/site.mjs build"
+  publish = ".checks/site/dist"
+
+[context.production]
+  command = "node scripts/site.mjs build --allow-production"

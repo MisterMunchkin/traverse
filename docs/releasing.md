@@ -56,8 +56,12 @@ TGZ, checksum, build identity and security guidance are included in that same
 preview. Download and verify it, then test that downloaded TGZ as a dev
 dependency. This tests the distribution path, not live model/device behavior.
 
-Production builds remain deliberately refused. Public visibility, npm registry
-publication and production website deployment are separate maintainer actions.
+After the approved public launch, `netlify.toml` enables the production website
+from `main` with `node scripts/site.mjs build --allow-production`. Production
+builds without that explicit flag remain refused. Deploy Previews use the
+default build command. Hosted candidates stay labelled as candidates; a website
+deployment does not create a version tag or GitHub release. Repository visibility,
+npm registry publication and website deployment remain separate maintainer actions.
 A public website can serve candidate TGZ bytes from a private repository, so
 only deploy the intended reviewed package payload. Never copy credentials,
 local receipts or generated caches into the static output.

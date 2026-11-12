@@ -69,10 +69,23 @@ test('website download uses the supplied archive bytes and works without JavaScr
   assert.ok(fs.readFileSync(path.join(out, 'security.html'), 'utf8').includes('127.0.0.1'));
 });
 
-test('site build refuses production context rather than publishing a candidate as a release', t => {
+test('site build refuses production context without explicit opt-in', t => {
   const out = path.join(temporary(t), 'site');
   const built = run('site.mjs', ['build', '--out', out], {CONTEXT: 'production'});
   assert.notEqual(built.status, 0);
   assert.match(built.stderr, /production/i);
   assert.equal(fs.existsSync(out), false);
+});
+
+
+test('production website build requires explicit opt-in and keeps candidate identity', t => {
+  const out = path.join(temporary(t), 'production-site');
+  const built = run('site.mjs', ['build', '--allow-production', '--out', out], {CONTEXT: 'production'});
+  assert.equal(built.status, 0, built.stderr);
+  const release = JSON.parse(fs.readFileSync(path.join(out, 'downloads/release.json')));
+  assert.equal(release.kind, 'candidate');
+  const html = fs.readFileSync(path.join(out, 'index.html'), 'utf8');
+  assert.ok(html.includes('Candidate build'));
+  assert.ok(!html.includes('@@'));
+  assert.equal(createHash('sha256').update(fs.readFileSync(path.join(out, 'downloads', release.filename))).digest('hex'), release.sha256);
 });

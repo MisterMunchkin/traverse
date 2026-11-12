@@ -48,8 +48,8 @@ export function checkSite() {
   return {assets: assets.length + researchAssets.length, links, ids: ids.length};
 }
 
-export async function buildSite({out = defaultOutput, releaseDir, signal} = {}) {
-  if (process.env.CONTEXT === 'production') throw Error('Production deployment remains disabled; use a deploy preview');
+export async function buildSite({out = defaultOutput, releaseDir, signal, allowProduction = false} = {}) {
+  if (process.env.CONTEXT === 'production' && !allowProduction) throw Error('Production build requires explicit --allow-production');
   checkSite();
   const supplied = releaseDir ? verifyRelease(path.resolve(releaseDir)) : null;
   out = path.resolve(out);
@@ -71,7 +71,7 @@ export async function buildSite({out = defaultOutput, releaseDir, signal} = {}) 
   }
   const substitutions = {VERSION: release.version, ARCHIVE: release.filename,
     BUILD_LABEL: release.kind === 'release' ? 'Experimental release' : 'Candidate build',
-    BUILD_NOTE: release.kind === 'release' ? 'This download uses the selected tagged release bundle.' : 'This download is a candidate built from this preview’s source, not a published release.'};
+    BUILD_NOTE: release.kind === 'release' ? 'This download uses the selected tagged release bundle.' : 'This download is a candidate built from this website’s source, not a published release.'};
   for (const file of assets) {
     let bytes = fs.readFileSync(path.join(source, file));
     if (file === 'index.html') bytes = Buffer.from(siteHTML().replace(/@@([A-Z_]+)@@/g, (_, key) => {
@@ -112,9 +112,9 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const interrupt = () => controller.abort('SIGINT'), terminate = () => controller.abort('SIGTERM');
   process.once('SIGINT', interrupt); process.once('SIGTERM', terminate);
   try {
-    const {values, positionals} = parseArgs({options: {out: {type: 'string'}, 'release-dir': {type: 'string'}}, allowPositionals: true});
-    if (positionals.length !== 1) throw Error('Usage: node scripts/site.mjs check|build|preview [--out DIRECTORY] [--release-dir DIRECTORY]');
-    const [command] = positionals, options = {out: values.out, releaseDir: values['release-dir'], signal: controller.signal};
+    const {values, positionals} = parseArgs({options: {out: {type: 'string'}, 'release-dir': {type: 'string'}, 'allow-production': {type: 'boolean', default: false}}, allowPositionals: true});
+    if (positionals.length !== 1) throw Error('Usage: node scripts/site.mjs check|build|preview [--out DIRECTORY] [--release-dir DIRECTORY] [--allow-production]');
+    const [command] = positionals, options = {out: values.out, releaseDir: values['release-dir'], allowProduction: values['allow-production'], signal: controller.signal};
     if (command === 'check') console.log(JSON.stringify(checkSite()));
     else if (command === 'build') console.log(JSON.stringify(await buildSite(options)));
     else if (command === 'preview') previewSite(options);

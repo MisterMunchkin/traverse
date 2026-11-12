@@ -1,6 +1,6 @@
 # Security
 
-Traverse is an unpublished prototype intended for trusted local development.
+Traverse is an experimental developer tool intended for trusted local development.
 Read the [security guidelines](docs/security.md) for the supported use, accepted
 limitations and review coverage. No independent certification is claimed.
 

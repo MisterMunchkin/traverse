@@ -19,11 +19,14 @@ source. To reuse exactly an already prepared bundle, pass
 `--release-dir .checks/candidate` to `site:build`; the archive bytes are copied.
 Tagged bundles say experimental release; ordinary PR/local builds say candidate.
 The rendered security page is generated from `docs/security.md` and is available
-without private GitHub access. Other repository guide links require repo access
-until the source is public. Node/npm are required for archive installation;
+without requiring GitHub access. Source and maintainer guides link to the public
+repository. Node/npm are required for archive installation;
 there is no `curl | sh` installer. See [release preparation](../docs/releasing.md).
 
-Netlify Deploy Previews build the PR source; production contexts remain refused.
+The checked-in `netlify.toml` builds PR previews from PR source and production
+from the configured `main` branch. Production explicitly passes
+`--allow-production`; a production-context build without that flag is refused.
+Hosting a candidate does not turn it into a tagged release.
 No model assets are in the static output. Website QA does not validate Traverse's
 live model/device driving. Before publishing a preview, inspect the exact packed
 paths, checksum, source identity and download/install result. A checksum served
