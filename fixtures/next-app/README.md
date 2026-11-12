@@ -1,6 +1,6 @@
 # Next extraction fixture
 
-Synthetic Next 16.0.11 / React 19.2.9 App Router app, independent of the website and Expo example. It exercises grouped routes and a concrete link to a dynamic page. Install locally with `npm ci --prefix fixtures/next-app --ignore-scripts --no-audit --no-fund` from the Traverse root.
+Synthetic Next 16.4.6 / React 19.2.9 App Router app, independent of the website and Expo example. It exercises grouped routes and a concrete link to a dynamic page. Install locally with `npm ci --prefix fixtures/next-app --ignore-scripts --no-audit --no-fund` from the Traverse root.
 
 Use the managed author/review setup from [adapters](../../docs/adapters.md#review-and-pin), or prepare the shipped deterministic reference for inspection:
 

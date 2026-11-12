@@ -77,6 +77,9 @@ export function runProcess(
       reject(e);
     });
     child.on("close", (code, signal) => {
+      // A leader can close before its same-group helpers finish shutdown.
+      // Complete pending group escalation before cleanup cancels the timer.
+      if (killTimer) kill("SIGKILL");
       cleanup();
       const record = {
         command,

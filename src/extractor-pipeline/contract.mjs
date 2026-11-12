@@ -42,7 +42,7 @@ export function compatibility(spec) {
   object(spec.routing, ['config', 'conventions']);
   assert.ok(spec.routing.config && typeof spec.routing.config === 'object' && !Array.isArray(spec.routing.config), 'routing config object required');
   if(next){
-    assert.match(spec.framework.version,/^16\.0\.\d+$/,'unsupported Next version');
+    assert.match(spec.framework.version,/^16\.(?:0|4)\.\d+$/,'unsupported Next version');
     object(spec.routing.conventions,['routeRoot']);assert.ok(['app','src/app'].includes(spec.routing.conventions.routeRoot),'unsupported route root');
     object(spec.routing.config,['aliases','versions']);
     assert.deepEqual(spec.routing.config.versions,{next:spec.framework.version,react:spec.routing.config.versions.react,'react-dom':spec.routing.config.versions.react});

@@ -5,7 +5,7 @@ import {cases,expectedFacts} from './fixtures.mjs';
 import {nextCases,nextFacts} from './fixtures-next.mjs';
 export function extractionOptions(compatible){
  if(compatible?.profile==='next-app-source-inventory/1'){
-  assert.equal(compatible.framework.package,'next');assert.match(compatible.framework.version,/^16\.0\.\d+$/);
+  assert.equal(compatible.framework.package,'next');assert.match(compatible.framework.version,/^16\.(?:0|4)\.\d+$/);
   return {profile:compatible.profile,routeRoot:compatible.routing.conventions.routeRoot,aliases:compatible.routing.config.aliases};
  }
  if(!compatible||compatible.profile==='expo-source-inventory/1')return {routeRoot:'app',aliases:{'@/*':['./*']}};

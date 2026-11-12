@@ -15,7 +15,7 @@ traverse device shutdown --platform ios --device ACTUAL_UDID
 
 Use a discovered iOS UDID or Android serial, never an invented ID. These commands invoke agent-device directly; boot/shutdown require explicit selection. Create/delete capabilities are false because the inspected CLI provides no documented command for them. No simulator-control fallback is bundled. Automatic run cleanup closes its own app/session and preserves the device. Explicit shutdown is a separate targeted operation.
 
-`--agent-device /absolute/executable` overrides PATH lookup. A session records the resolved executable, launcher hash and reported version, plus a unique underlying session and explicit target. The launcher hash is not a transitive dependency or installed-app build attestation.
+`--agent-device /absolute/executable` overrides PATH lookup. A session records the resolved executable, launcher hash and reported version, plus a unique underlying session and explicit target. Observe, act and close resolve the current explicit selection or PATH again and require it to match the recorded path and launcher hash; saved metadata does not select an executable. Repeat `--agent-device` for a custom runner outside PATH. Full session authority (target, underlying runner session and lifecycle state) lives in private user state outside the canonical project, under `$XDG_STATE_HOME/traverse/driving-sessions` or `~/.local/state/traverse/driving-sessions`. Repository `session.json` files are diagnostics only. Copied, legacy or moved sessions require a fresh `session open` with a new name; existing repository metadata is never imported as authority. Removing repository diagnostics does not free a private session name. Keep private state available until targeted cleanup completes. The launcher hash is not a transitive dependency or installed-app build attestation, and an operator-controlled PATH remains trusted input.
 
 ## Inspect and act
 
@@ -38,7 +38,7 @@ Example action file, using IDs returned by the actual observation:
 {"observationId":"ACTUAL_OBSERVATION_ID","type":"press","target":"ACTUAL_CONTROL_ID"}
 ```
 
-For text use `type: "fill"` and `value`; scrolling uses `type: "scroll", direction: "down"` (also up/top/bottom); navigation uses `type: "back"`. Unknown fields/actions are rejected. Secure fields are not offered for automated text entry. Only the unique innermost active dialog authorizes controls; independent modal scopes with no provable order offer none. Noninteractive containers do not inherit their own lack of hittability into actionable descendants.
+For text use `type: "fill"` and `value`; scrolling uses `type: "scroll", direction: "down"` (also up/top/bottom); navigation uses `type: "back"`. Unknown fields/actions are rejected. Secure fields are not offered for automated text entry. When a native target specifies a bundle identifier and the snapshot reports a different bundle identifier, the observation is rejected even if it contains a dialog. A dialog does not grant authority over another application; a system-owned permission surface reporting another bundle remains rejected. Only the unique innermost active dialog authorizes controls; independent modal scopes with no provable order offer none. Noninteractive containers do not inherit their own lack of hittability into actionable descendants.
 
 Before dispatch, act takes another snapshot. Semantic change rejects the action with a new observation; unchanged semantics use newly captured opaque refs, including any snapshot pin. There remains a race between the final check and platform dispatch. No atomic UI guarantee is implied. A command acknowledgement and its subsequent observation are separate receipt fields. A timeout after dispatch leaves the effect uncertain and never automatically repeats the mutation.
 
@@ -66,7 +66,7 @@ traverse drive --task /absolute/task.json --session profile-1 \
   --platform web --app http://127.0.0.1:8081 --record --json
 ```
 
-Local-first requires an already verified `traverse setup` cache (`--cache-dir` overrides). It uses a private pinned Ollama process and stops that owned process group. There is no implicit model download or attachment to a shared daemon. Each decision includes one shared graph, current UI and the last eight actions. The local policy uses the researched 0.819 margin, confidence floor0, 1500 estimated token ceiling and23-control limit. One control also gets an abstention option. Too many controls/context, model outage or uncertain choice escalates without silently truncating the choices.
+Local-first requires an already verified `traverse setup` cache (`--cache-dir` overrides). It uses an owned pinned Ollama process bound to loopback, with an unauthenticated local API, and stops that owned process group. There is no implicit model download or attachment to a shared daemon. Each decision includes one shared graph, current UI and the last eight actions. The local policy uses the researched 0.819 margin, confidence floor0, 1500 estimated token ceiling and23-control limit. One control also gets an abstention option. Too many controls/context, model outage or uncertain choice escalates without silently truncating the choices.
 
 Without a configured frontier provider or command, escalation returns exit2 and a saved self-contained brief. The run closes its session; this is a decision report, not a resumable paused execution. Use a newly observed session for subsequent manual actions, or run `traverse init` before running. No task is declared complete without the explicit expected UI state.
 
@@ -101,3 +101,9 @@ Doctor checks configuration readiness. Native UI validation status belongs in th
 ## Validation coverage
 
 Managed official model acquisition and actual constrained-choice inference have been exercised on macOS arm64. Runner transport, stale targets, modal/field guards, bounded loop behavior and cleanup are verified with isolated fixtures. The actual packaged local-first model smoke returned LOW_MARGIN and took no UI actions; it was not a successful task. Live browser/native integration, durable business effects and recording playback still require their own observed runs. These limits do not make a correctly configured installation unhealthy.
+
+## Security guidelines
+
+Use a disposable development session with synthetic inputs. Read the
+[security guidelines](security.md) for local model peer access, browser
+navigation/frame limits, provider data sharing and private evidence handling.

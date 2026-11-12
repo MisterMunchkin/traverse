@@ -7,6 +7,7 @@ import {noSymlinks} from '../installation.mjs';
 import {directory, readJson, atomicJson, withLock, exists} from '../state.mjs';
 import {runProcess} from '../runtime/process.mjs';
 import {need, validateTarget} from './contract.mjs';
+import {preflightSessionState, readSessionState, writeSessionState} from './session-state.mjs';
 import {createAgentDeviceRunner, resolveAgentDevice, RUNNER_CAPABILITIES} from './agent-device.mjs';
 
 const hash = file => createHash('sha256').update(fs.readFileSync(file)).digest('hex');
@@ -20,8 +21,11 @@ export async function drivingProject(project = process.cwd(), signal) {
   need(status.ready, 'Repository graph is stale or invalid; run traverse graph refresh');
   return {root: p.root, graph: readJson(status.graph).inventory, graphStatus: status};
 }
-function wrapRunner(state, dir, options) {
-  const write = () => atomicJson(path.join(dir, 'session.json'), state);
+function wrapRunner(state, dir, options, project) {
+  const write = () => {
+    writeSessionState(project, state);
+    atomicJson(path.join(dir, 'session.json'), state);
+  };
   const runner = createAgentDeviceRunner({executable: state.executable, session: state.runnerSession, directory: path.join(dir, 'runner'), target: state.target, signal: options.signal, timeoutMs: options.commandTimeoutMs ?? 15000});
   const open = runner.open, close = runner.close;
   runner.open = async context => { state.status = 'opening'; write(); const result = await open(context); state.status = 'open'; write(); return result; };
@@ -35,20 +39,22 @@ export async function newSession(project, options) {
   validateTarget(options.target);
   const dir = sessionLocation(project, options.name), executable = resolveAgentDevice(options.executable);
   need(!exists(dir), 'Session name already exists; choose a fresh --session name');
+  preflightSessionState(project, options.name);
   const version = await runProcess(executable, ['--version'], {timeoutMs: 10000, signal: options.signal, maxBytes: 65536});
   need(/^\d+\.\d+\.\d+(?:[^\r\n]*)?$/.test(version.stdout.trim()), 'agent-device version is unrecognized');
   directory(path.dirname(dir)); fs.mkdirSync(dir, {mode: 0o700});
   const state = {schema, name: options.name, runnerSession: 'wf-' + randomUUID(), target: options.target, executable, executableSha256: hash(executable), version: version.stdout.trim(), status: 'prepared', createdAt: new Date().toISOString()};
+  writeSessionState(project, state);
   atomicJson(path.join(dir, 'session.json'), state);
-  return {state, directory: dir, runner: wrapRunner(state, dir, options)};
+  return {state, directory: dir, runner: wrapRunner(state, dir, options, project)};
 }
 export function existingSession(project, options) {
-  const dir = sessionLocation(project, options.name), state = readJson(path.join(dir, 'session.json'), 65536);
+  const dir = sessionLocation(project, options.name), state = readSessionState(project, options.name);
   need(state.schema === schema && state.name === options.name && /^wf-[0-9a-f-]{36}$/.test(state.runnerSession), 'Unowned or invalid session metadata');
   validateTarget(state.target);
-  const executable = resolveAgentDevice(options.executable ?? state.executable);
+  const executable = resolveAgentDevice(options.executable);
   need(executable === state.executable && hash(executable) === state.executableSha256, 'Session runner executable changed; restore its recorded bytes before continuing');
-  return {state, directory: dir, runner: wrapRunner(state, dir, options)};
+  return {state, directory: dir, runner: wrapRunner(state, dir, options, project)};
 }
 export const lockSession = (session, work) => withLock(path.join(session.directory, 'session.lock'), work);
 export async function sessionCommand(operation, options) {

@@ -1,4 +1,5 @@
 import test from 'node:test';
+import './support/isolated-approval-state.mjs';
 import {EventEmitter} from 'node:events';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

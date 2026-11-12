@@ -21,6 +21,8 @@ Machine setup downloads these separately, verifies pinned content and stores it 
 
 The source-only Expo example retains its existing MIT notice at `examples/expo/LICENSE`, copyright 650 Industries, Inc. (aka Expo). That example and its notice are available in the source checkout and are not part of the CLI archive. Expo and the example's other dependencies retain their own notices.
 
+The source-only [Next fixture](../fixtures/next-app/README.md) declares its own pinned Next.js and React dependencies. Its source and lockfile are included as fixture material; installed dependencies, native compiler binaries and generated `.next` output are excluded from the CLI archive. Those separately installed packages retain their upstream licenses and notices.
+
 The research summary describes earlier experiments and includes selected aggregate numbers. It grants no rights to third-party app code, provider outputs, model weights or recordings. Raw prompts, app-source excerpts and recordings are not included in this package.
 
 

@@ -15,7 +15,12 @@
   "scripts": {
     "test": "node --test --test-concurrency=1 test/*.test.mjs",
     "check": "node scripts/check.mjs",
-    "check:package": "node scripts/package-smoke.mjs"
+    "check:package": "node scripts/package-smoke.mjs",
+    "release:pack": "node scripts/release.mjs pack",
+    "release:verify": "node scripts/release.mjs verify",
+    "check:site": "node scripts/site.mjs check",
+    "site:build": "node scripts/site.mjs build",
+    "site:preview": "node scripts/site.mjs preview"
   },
   "dependencies": {
     "typescript": "6.0.3"
@@ -32,5 +37,8 @@
     "README.md",
     "docs/"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "netlify-cli": "27.16.1"
+  }
 }

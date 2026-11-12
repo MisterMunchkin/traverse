@@ -2,19 +2,31 @@
 
 Give UI agents a navigation map and a small local model for routine decisions. Traverse extracts reviewed source graphs, uses **tev1** for local choices, and escalates uncertain decisions to **Codex or Claude**. Its built-in UI runner uses **agent-device**.
 
-**Prototype:** Expo Router extraction is supported. Packaged native driving still needs end-to-end validation.
+**Experimental:** Expo Router and bounded Next App Router extraction are supported. Packaged live browser/native driving still needs end-to-end validation.
 
 ![Conceptual Traverse flow: reviewed source graph and fresh UI feed tev1; uncertain choices escalate to Codex or Claude, actions use agent-device and the UI is observed again.](docs/assets/traverse-overview.png)
 
 ## Install
 
-Requires Node **22.11+**. The npm package is not published yet; build from this repository:
+Requires Node **22.11+**. The npm registry package is not published yet. Download a reviewed TGZ and its checksum from the selected website preview or GitHub release when available, or build from this repository:
 
 ```sh
 npm ci --ignore-scripts --no-audit --no-fund
 npm pack
 npm install --global ./mistermunchkin-traverse-0.12.0.tgz
 ```
+
+For a project dev dependency, verify the downloaded checksum, then run:
+
+```sh
+shasum -a 256 --check SHA256SUMS &&
+npm install --save-dev ./mistermunchkin-traverse-0.12.0.tgz &&
+npx --no-install traverse --version
+```
+
+Use `npx --no-install traverse` in place of `traverse` below for a local dev dependency.
+See [experimental release notes](docs/releases/0.12.0.md) and the
+[release/download workflow](docs/releasing.md).
 
 Optionally install the local model once per machine:
 
@@ -64,3 +76,11 @@ For development, follow [CONTRIBUTING.md](CONTRIBUTING.md) and run `npm run chec
 ## License
 
 [MIT](LICENSE), copyright 2026 Traverse contributors. [Third-party components](docs/third-party.md) retain their own terms.
+
+## Security guidelines
+
+Use Traverse with trusted local projects on a trusted personal computer, and
+start UI trials with synthetic accounts and test data. Local Ollama access is
+unauthenticated, and browser driving does not enforce a website/frame boundary.
+Read the [security guidelines](docs/security.md) for these limits, provider data
+sharing and handling private session evidence.

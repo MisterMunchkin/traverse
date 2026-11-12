@@ -35,7 +35,7 @@ Only exports declared in [package.json](../package.json) are package entrypoints
 
 **Generated code has host authority.** An author cannot select its validator or approve its own artifact. Exact bytes require review, then independent conformance/current-source validation. Only the exact bundled reference has the narrow automatic trust path. Reduced environments and bounded subprocesses are not an OS sandbox for malicious code. See [adapter review](adapters.md).
 
-**Refresh is deterministic.** Refresh/watch reuse accepted code with zero author calls. Graph bindings cover source, configuration, extractor and generator/environment identity. Source changes make graphs stale; parser, validator, runtime or compatibility changes can invalidate acceptance. Preserve the last valid graph on failure. Never update recorded hashes merely to make a check pass.
+**Refresh is deterministic.** Refresh/watch reuse accepted code with zero author calls. Custom-extractor execution grants use the private state outside the repository managed by [extractor approval](../src/extractor-approval.mjs); repository receipts are diagnostics, and copied or legacy receipts grant no implicit execution permission. Graph bindings cover source, configuration, extractor and generator/environment identity. Source changes make graphs stale; parser, validator, runtime or compatibility changes can invalidate acceptance. Preserve the last valid graph on failure. Never update recorded hashes merely to make a check pass.
 
 **Format versions are independent of CLI versions.** Inventories use `schema: "traverse-navigation"` and `schemaVersion: 1`. `.wayfinder` paths and `wayfinder-*` envelopes remain compatibility identifiers. Branding is not a schema migration. [Navigation upgrades](adoption.md#navigation-format-upgrades) preserve old state and require fresh trust; old approvals are never silently rewritten.
 
@@ -47,7 +47,7 @@ Only exports declared in [package.json](../package.json) are package entrypoints
 
 ## Current support and limits
 
-Extraction supports the two host-owned Expo 57/Router 57 [profiles](adapters.md#first-supported-profiles) and the bounded [Next16.0/React19.2 App Router profile](adapters.md#next-app-router-first-slice). The original uses a bundled reference; the extended static profile can require generated, reviewed code. Another framework needs host-owned compatibility rules, independent validation and fixtures first. App config is inspected statically, never executed.
+Extraction supports the two host-owned Expo 57/Router 57 [profiles](adapters.md#first-supported-profiles) and the bounded [Next16.0 or 16.4/React19.2 App Router profile](adapters.md#next-app-router-first-slice). The original uses a bundled reference; the extended static profile can require generated, reviewed code. Another framework needs host-owned compatibility rules, independent validation and fixtures first. App config is inspected statically, never executed.
 
 The driving policy receives the shared graph, fresh UI, goal/inputs and the last eight actions. Local choice uses margin 0.819, confidence floor 0, an estimated 1,500-token ceiling and 23-control limit with frontier escalation. These are fixture-derived defaults, not native safety calibration. Change them through explicit experiments and outcome accounting.
 
@@ -85,4 +85,4 @@ npm pack --ignore-scripts
 
 Inspect archive contents, notices and intended version. The manifest's `files` allowlist defines the shipped surface; the Expo app, contributor tests and repo-only maintainer skill are not runtime prerequisites. Keep version/shrinkwrap metadata consistent for releases. Review [third-party terms](third-party.md) and prepare notes describing behavior, validation and limits.
 
-Approve the exact commit, version, repository visibility and npm target before pushing, tagging, changing `private`, publishing or updating a global installation. Keep `private: true` until an explicit release change. No workflow currently publishes a package. Installation/removal uses the actual scoped package name and selected npm prefix; see [installation scopes](adoption.md#installation-scopes).
+Approve the exact commit, version, repository visibility and npm target before pushing, tagging, changing `private`, publishing or updating a global installation. Keep `private: true` until an explicit release change. The [experimental release workflow](releasing.md) attaches verified TGZ/checksum/identity assets to an explicitly published matching GitHub release. It does not publish to npm or deploy production. Installation/removal uses the actual scoped package name and selected npm prefix; see [installation scopes](adoption.md#installation-scopes).

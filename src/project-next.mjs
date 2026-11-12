@@ -17,10 +17,11 @@ export function inspectNextProject(root) {
   const json = name => { try { return JSON.parse(read(name)); } catch (e) { if (e instanceof SyntaxError) throw Error(`${name}: malformed JSON`); throw e; } };
   const pkg = json('package.json'), lock = json('package-lock.json'), versions = {};
   if (![2, 3].includes(lock.lockfileVersion)) throw Error('package-lock.json: npm lockfile v2 or v3 required');
-  for (const [name, version] of [['next', '16.0'], ['react', '19.2'], ['react-dom', '19.2']]) {
+  for (const [name, allowed] of [['next', ['16.0', '16.4']], ['react', ['19.2']], ['react-dom', ['19.2']]]) {
     const installed = json(`node_modules/${name}/package.json`), declared = pkg.dependencies?.[name];
     const range = /^(~?)(\d+\.\d+)\.(\d+)$/.exec(declared ?? '');
-    if (!range || range[2] !== version || installed.name !== name || !new RegExp(`^${version.replace('.', '\\.')}\\.\\d+$`).test(installed.version ?? '') || installed.version !== lock.packages?.[`node_modules/${name}`]?.version || declared !== lock.packages?.['']?.dependencies?.[name] || (range[1] ? Number(installed.version.split('.')[2]) < Number(range[3]) : declared !== installed.version)) throw Error(`Missing/incompatible installed, declared or locked ${name}; this profile requires ${version}.x exact/tilde npm dependencies; run npm ci`);
+    const installedRange = /^(\d+\.\d+)\.\d+$/.exec(installed.version ?? '');
+    if (!range || !allowed.includes(range[2]) || installed.name !== name || installedRange?.[1] !== range[2] || installed.version !== lock.packages?.[`node_modules/${name}`]?.version || declared !== lock.packages?.['']?.dependencies?.[name] || (range[1] ? Number(installed.version.split('.')[2]) < Number(range[3]) : declared !== installed.version)) throw Error(`Missing/incompatible installed, declared or locked ${name}; this profile requires ${allowed.map(v => v + '.x').join(' or ')} exact/tilde npm dependencies; run npm ci`);
     versions[name] = installed.version;
   }
   if (versions.react !== versions['react-dom']) throw Error('react/react-dom installed versions must match');
@@ -69,5 +70,5 @@ export function inspectNextProject(root) {
   if (!Object.keys(files).some(name => name.startsWith(routeRoot + '/') && /\/page\.[jt]sx?$/.test(name))) throw Error(`No page source files found under ${routeRoot}/`);
   const fingerprint = sourceFingerprint(files), settings = {framework: {package: 'next', version: versions.next}, routing: {config: {aliases, versions}, conventions: {routeRoot}}, contract: CONTRACT, profile: NEXT_PROFILE};
   const spec = {...settings, source: {revision: `content-sha256:${fingerprint}`, files}}; compatibility(spec);
-  return {root, config: {schema: 'wayfinder-project/2', ...settings}, spec, provenance: {schema: 'wayfinder-project-snapshot/1', revisionKind: 'content-addressed-source-not-git-or-build', sourceFingerprint: fingerprint, sourceManifest: manifest(files), inputHashes: hashes, versions, includedDirectories, limitations: ['Next16.0/React19.2 default App Router conventions; configuration is never executed', 'Partial file-level declared navigation, not runtime visibility or auth proof', 'No installed build identity']}};
+  return {root, config: {schema: 'wayfinder-project/2', ...settings}, spec, provenance: {schema: 'wayfinder-project-snapshot/1', revisionKind: 'content-addressed-source-not-git-or-build', sourceFingerprint: fingerprint, sourceManifest: manifest(files), inputHashes: hashes, versions, includedDirectories, limitations: ['Next16.0 or16.4/React19.2 default App Router conventions; configuration is never executed', 'Partial file-level declared navigation, not runtime visibility or auth proof', 'No installed build identity']}};
 }
