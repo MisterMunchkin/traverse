@@ -5,17 +5,23 @@ import http from 'node:http';
 import {parseArgs} from 'node:util';
 import {fileURLToPath} from 'node:url';
 import {root, freshOutput, packRelease, verifyRelease} from './release.mjs';
+import {renderResearch} from './research-site.mjs';
 
 const source = path.join(root, 'website');
 const defaultOutput = path.join(root, '.checks/site/dist');
 const assets = ['index.html', 'styles.css', 'site.js', 'mark.svg'];
+const researchAssets = ['research.json', 'research-methods.md'];
 const types = {'.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
-  '.svg': 'image/svg+xml', '.tgz': 'application/gzip', '.json': 'application/json; charset=utf-8'};
+  '.svg': 'image/svg+xml', '.tgz': 'application/gzip', '.json': 'application/json; charset=utf-8', '.md': 'text/plain; charset=utf-8'};
 const escape = text => text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
+function siteHTML() {
+  const data = JSON.parse(fs.readFileSync(path.join(root, 'docs/research/results.json'), 'utf8'));
+  return fs.readFileSync(path.join(source, 'index.html'), 'utf8').replace('@@RESEARCH@@', renderResearch(data));
+}
 
 export function checkSite() {
   for (const file of assets) if (!fs.statSync(path.join(source, file)).isFile()) throw Error('Missing site asset: ' + file);
-  const html = fs.readFileSync(path.join(source, 'index.html'), 'utf8');
+  const html = siteHTML();
   const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
   if (new Set(ids).size !== ids.length) throw Error('Duplicate HTML IDs');
   let links = 0;
@@ -24,7 +30,7 @@ export function checkSite() {
     if (raw.startsWith('#')) {
       if (!ids.includes(raw.slice(1))) throw Error('Broken page anchor: ' + raw);
     } else if (raw.startsWith('./')) {
-      if (![...assets, 'security.html', 'downloads/@@ARCHIVE@@', 'downloads/SHA256SUMS', 'downloads/release.json'].includes(raw.slice(2)))
+      if (![...assets, ...researchAssets, 'security.html', 'downloads/@@ARCHIVE@@', 'downloads/SHA256SUMS', 'downloads/release.json'].includes(raw.slice(2)))
         throw Error('Unknown static asset: ' + raw);
     } else {
       const url = new URL(raw), prefix = '/MisterMunchkin/traverse/blob/main/';
@@ -39,7 +45,7 @@ export function checkSite() {
       }
     }
   }
-  return {assets: assets.length, links, ids: ids.length};
+  return {assets: assets.length + researchAssets.length, links, ids: ids.length};
 }
 
 export async function buildSite({out = defaultOutput, releaseDir, signal} = {}) {
@@ -68,12 +74,14 @@ export async function buildSite({out = defaultOutput, releaseDir, signal} = {}) 
     BUILD_NOTE: release.kind === 'release' ? 'This download uses the selected tagged release bundle.' : 'This download is a candidate built from this preview’s source, not a published release.'};
   for (const file of assets) {
     let bytes = fs.readFileSync(path.join(source, file));
-    if (file === 'index.html') bytes = Buffer.from(bytes.toString().replace(/@@([A-Z_]+)@@/g, (_, key) => {
+    if (file === 'index.html') bytes = Buffer.from(siteHTML().replace(/@@([A-Z_]+)@@/g, (_, key) => {
       if (!(key in substitutions)) throw Error('Unknown website placeholder: ' + key);
       return escape(substitutions[key]);
     }));
     fs.writeFileSync(path.join(out, file), bytes);
   }
+  fs.copyFileSync(path.join(root, 'docs/research/results.json'), path.join(out, 'research.json'));
+  fs.copyFileSync(path.join(root, 'docs/research.md'), path.join(out, 'research-methods.md'));
   const guidelines = escape(fs.readFileSync(path.join(root, 'docs/security.md'), 'utf8'));
   fs.writeFileSync(path.join(out, 'security.html'), `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Traverse security guidelines</title><link rel="stylesheet" href="./styles.css"><main class="wrap"><p><a href="./index.html">Back to Traverse</a></p><h1>Security guidelines</h1><pre style="white-space:pre-wrap;overflow-wrap:anywhere;font:inherit">${guidelines}</pre></main></html>\n`);
   fs.writeFileSync(path.join(out, '.traverse-site'), 'traverse-static-site/1\n');
@@ -83,7 +91,7 @@ export async function buildSite({out = defaultOutput, releaseDir, signal} = {}) 
 export function previewSite({out = defaultOutput, port = Number(process.env.PORT ?? 4173)} = {}) {
   if (!Number.isSafeInteger(port) || port < 1 || port > 65535) throw Error('PORT must be 1..65535');
   const release = verifyRelease(path.join(out, 'downloads'));
-  const files = [...assets, 'security.html', ...[release.filename, 'SHA256SUMS', 'release.json'].map(file => 'downloads/' + file)];
+  const files = [...assets, ...researchAssets, 'security.html', ...[release.filename, 'SHA256SUMS', 'release.json'].map(file => 'downloads/' + file)];
   const server = http.createServer((request, response) => {
     const pathname = new URL(request.url, 'http://127.0.0.1').pathname;
     const file = pathname === '/' ? 'index.html' : pathname.slice(1);

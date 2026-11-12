@@ -31,3 +31,20 @@ beside its archive detects mismatch but is not a publisher signature.
 
 Browser visual/responsive, copy/keyboard and recording acceptance need an
 available authorized browser. HTTP/build checks alone do not establish them.
+
+## Research metrics
+
+The results section is rendered at build time by `scripts/research-site.mjs`
+from `docs/research/results.json`. No browser fetch, chart library, analytics or
+model run is required. Labeled HTML bars start at zero on a separate scale per
+unit; raw values, completion denominators, methods and negative results remain
+readable without JavaScript. The full aggregate JSON and original methods
+Markdown are copied byte-for-byte to `research.json` and `research-methods.md`.
+
+Keep matched common-completion driving time separate from all-attempt frontier
+usage. Do not pool the earlier pilot with the fresh comparison, claim dollar
+savings from tokens, attribute the control startup failure to model reasoning,
+or transfer historical fixture scores to the current package/native runtime.
+When changing the aggregates, review study identity and methods together;
+missing measurements or invalid denominators fail the build. Package/CI checks
+are described separately from these historical performance results.
