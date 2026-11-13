@@ -38,7 +38,8 @@ export function compatibility(spec) {
   assert.equal(spec.framework.package, next?'next':'expo-router', 'unsupported framework: new profile/conformance required');
   assert.match(spec.framework.version, /^\d+\.\d+\.\d+(?:-[\w.-]+)?$/, 'exact framework version required');
   assert.deepEqual(spec.contract, CONTRACT, 'unsupported graph contract; prepare a fresh Traverse request and review the new artifact');
-  assert.ok([PROFILE,'expo-source-inventory/2','next-app-source-inventory/1'].includes(spec.profile), 'unsupported profile: independent conformance required');
+  assert.ok([PROFILE,'expo-source-inventory/2','expo-bun-source-inventory/1','next-app-source-inventory/1'].includes(spec.profile), 'unsupported profile: independent conformance required');
+  if(spec.profile==='expo-bun-source-inventory/1')assert.match(spec.framework.version,/^55\.0\.\d+$/,'unsupported Bun Expo version');
   object(spec.routing, ['config', 'conventions']);
   assert.ok(spec.routing.config && typeof spec.routing.config === 'object' && !Array.isArray(spec.routing.config), 'routing config object required');
   if(next){

@@ -10,8 +10,9 @@ export function extractionOptions(compatible){
  }
  if(!compatible||compatible.profile==='expo-source-inventory/1')return {routeRoot:'app',aliases:{'@/*':['./*']}};
  assert.equal(compatible.framework.package,'expo-router','No independent framework conformance support');
- assert.match(compatible.framework.version,/^57\.0\.\d+$/,'No conformance support for this framework version');
- assert.equal(compatible.profile,'expo-source-inventory/2','No independent profile conformance support');
+ const bun=compatible.profile==='expo-bun-source-inventory/1';
+ assert.match(compatible.framework.version,bun?/^55\.0\.\d+$/:/^57\.0\.\d+$/,'No conformance support for this framework version');
+ assert.ok(bun||compatible.profile==='expo-source-inventory/2','No independent profile conformance support');
  return {routeRoot:compatible.routing.conventions.routeRoot,aliases:compatible.routing.config.aliases};
 }
 export function conformanceCases(compatible){

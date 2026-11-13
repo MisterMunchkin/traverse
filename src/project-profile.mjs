@@ -5,6 +5,7 @@ import {noSymlinks} from './installation.mjs';
 import {CONTRACT,sha,manifest,sourceFingerprint,compatibility} from './extractor-pipeline/contract.mjs';
 
 export const EXPO_PROFILE='expo-source-inventory/2';
+export const BUN_EXPO_PROFILE='expo-bun-source-inventory/1';
 const configNames=['app.json','app.config.js','app.config.ts','app.config.mjs','app.config.cjs','metro.config.js','metro.config.cjs','metro.config.mjs','babel.config.js','babel.config.cjs'];
 const exists=p=>{try{fs.lstatSync(p);return true;}catch(e){if(e.code==='ENOENT')return false;throw e;}};
 export function modernProfile(root){
@@ -17,16 +18,27 @@ export function modernProfile(root){
  return false;
 }
 // Parse routing facts, never evaluate app/Metro/Babel config or read environment values.
-export function inspectModernProject(root){
+export function inspectModernProject(root,{profile=EXPO_PROFILE}={}){
+ if(![EXPO_PROFILE,BUN_EXPO_PROFILE].includes(profile))throw Error('Unsupported Expo source profile');
+ const bun=profile===BUN_EXPO_PROFILE;
  const ts=createRequire(new URL('../package.json',import.meta.url))('typescript'),hashes={};
- function read(name){const full=path.join(root,name);noSymlinks(full,{label:'input'});const st=fs.statSync(full);const limit=name==='package-lock.json'?16:1;if(!st.isFile()||st.size>limit*1024*1024)throw Error(`Input must be a regular file under ${limit} MiB: ${name}`);const text=fs.readFileSync(full,'utf8');hashes[name]=sha(text);return text;}
+ function read(name){const full=path.join(root,name);noSymlinks(full,{label:'input'});const st=fs.statSync(full);const limit=['package-lock.json','bun.lock'].includes(name)?16:1;if(!st.isFile()||st.size>limit*1024*1024)throw Error(`Input must be a regular file under ${limit} MiB: ${name}`);const text=fs.readFileSync(full,'utf8');hashes[name]=sha(text);return text;}
  const json=name=>{try{return JSON.parse(read(name));}catch(e){if(e instanceof SyntaxError)throw Error(`Malformed JSON: ${name}; inspect it locally`);throw e;}};
- const pkg=json('package.json'),lock=json('package-lock.json');
+ const pkg=json('package.json');let lock;
+ if(bun){
+  if(['package-lock.json','bun.lockb','yarn.lock','pnpm-lock.yaml'].some(name=>exists(path.join(root,name))))throw Error('Ambiguous lockfiles; Expo55 Bun profile requires only bun.lock');
+  const parsed=ts.parseConfigFileTextToJson('bun.lock',read('bun.lock'));
+  if(parsed.error)throw Error('Malformed Bun text lockfile');lock=parsed.config;
+  if(lock?.lockfileVersion!==1||lock.configVersion!==1||!lock.workspaces?.['']||!lock.packages)throw Error('Unsupported Bun lock schema; expected text lockfileVersion1/configVersion1');
+ }else lock=json('package-lock.json');
  if(pkg.main!=='expo-router/entry')throw Error('Unsupported routing entrypoint; this profile requires expo-router/entry. A new framework needs independent conformance support before init can mark it ready.');
  const versions={};
  for(const name of ['expo','expo-router']){
-  const installed=json(`node_modules/${name}/package.json`),declared=pkg.dependencies?.[name],m=/^(~?)57\.0\.(\d+)$/.exec(declared??'');
-  if(!m||installed.name!==name||!/^57\.0\.\d+$/.test(installed.version??'')||installed.version!==lock.packages?.[`node_modules/${name}`]?.version||declared!==lock.packages?.['']?.dependencies?.[name]||(m[1]?Number(installed.version.split('.')[2])<Number(m[2]):declared!==installed.version))throw Error(`Missing/incompatible installed, declared or locked ${name}; run npm ci with the project lockfile`);
+  const installed=json(`node_modules/${name}/package.json`),declared=pkg.dependencies?.[name],m=(bun?/^([~^]?)55\.0\.(\d+)$/:/^(~?)57\.0\.(\d+)$/).exec(declared??'');
+  const entry=bun?lock.packages[name]:null;
+  const locked=bun?(Array.isArray(entry)&&entry.length===4&&typeof entry[3]==='string'&&entry[3].startsWith('sha512-')&&typeof entry[0]==='string'&&entry[0].startsWith(name+'@')?entry[0].slice(name.length+1):null):lock.packages?.[`node_modules/${name}`]?.version;
+  const rootDeclaration=bun?lock.workspaces[''].dependencies?.[name]:lock.packages?.['']?.dependencies?.[name];
+  if(!m||installed.name!==name||!(bun?/^55\.0\.\d+$/:/^57\.0\.\d+$/).test(installed.version??'')||installed.version!==locked||declared!==rootDeclaration||(m[1]?Number(installed.version.split('.')[2])<Number(m[2]):declared!==installed.version))throw Error(`Missing/incompatible installed, declared or locked ${name}; use the matching ${bun?'Bun':'npm'} lockfile and installed dependencies`);
   versions[name]=installed.version;
  }
  const parsed=ts.parseConfigFileTextToJson('tsconfig.json',read('tsconfig.json'));if(parsed.error)throw Error('Malformed tsconfig.json; inspect it locally');
@@ -93,7 +105,7 @@ export function inspectModernProject(root){
  function walk(relative,depth=0){noSymlinks(path.join(root,relative),{label:'input'});if(depth>16)throw Error('Source directory depth exceeds 16');for(const entry of fs.readdirSync(path.join(root,relative),{withFileTypes:true}).sort((a,b)=>a.name.localeCompare(b.name))){if(++count>10000)throw Error('Source entry count exceeds 10000');const name=relative+'/'+entry.name;if(entry.isSymbolicLink())throw Error(`Symlink input is unsupported: ${name}`);if(entry.isDirectory()){if(!['node_modules','.git','.wayfinder'].includes(entry.name))walk(name,depth+1);}else if(/\.[jt]sx?$/.test(name)){const source=read(name);delete hashes[name];bytes+=Buffer.byteLength(source);if(bytes>16*1024*1024)throw Error('Source size exceeds 16 MiB');files[name]=source;}}}
  const includedDirectories=[];for(const name of roots)if(exists(path.join(root,name))&&!includedDirectories.some(parent=>name.startsWith(parent+'/'))){walk(name);includedDirectories.push(name);}
  if(!Object.keys(files).some(f=>f.startsWith(routeRoot+'/')&&!/(^|\/)[_+]/.test(f.slice(routeRoot.length+1))))throw Error(`No route source files found under ${routeRoot}/`);
- const fingerprint=sourceFingerprint(files),settings={framework:{package:'expo-router',version:versions['expo-router']},routing:{config:{entrypoint:pkg.main,aliases},conventions:{routeRoot,componentAlias:'@/'}},contract:CONTRACT,profile:EXPO_PROFILE};
+ const fingerprint=sourceFingerprint(files),settings={framework:{package:'expo-router',version:versions['expo-router']},routing:{config:{entrypoint:pkg.main,aliases},conventions:{routeRoot,componentAlias:'@/'}},contract:CONTRACT,profile};
  const spec={...settings,source:{revision:`content-sha256:${fingerprint}`,files}};compatibility(spec);
- return {root,config:{schema:'wayfinder-project/2',...settings},spec,provenance:{schema:'wayfinder-project-snapshot/1',revisionKind:'content-addressed-source-not-git-or-build',sourceFingerprint:fingerprint,sourceManifest:manifest(files),inputHashes:hashes,versions,includedDirectories,limitations:['Static Expo57 navigation facts; configuration is never executed','Source inventory, not runtime state or UI effect proof','No installed build identity']}};
+ return {root,config:{schema:'wayfinder-project/2',...settings},spec,provenance:{schema:'wayfinder-project-snapshot/1',revisionKind:'content-addressed-source-not-git-or-build',sourceFingerprint:fingerprint,sourceManifest:manifest(files),inputHashes:hashes,versions,includedDirectories,limitations:[`Static Expo${bun?'55/Bun':'57'} navigation facts; configuration is never executed`,'Source inventory, not runtime state or UI effect proof','No installed build identity']}};
 }

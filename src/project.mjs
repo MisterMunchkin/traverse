@@ -3,7 +3,7 @@ import path from 'node:path';
 import {CONTRACT, PROFILE, compatibility, manifest, sourceFingerprint, sha, json as canonical} from './extractor-pipeline/contract.mjs';
 import {noSymlinks} from './installation.mjs';
 import {atomicJson, directory} from './state.mjs';
-import {modernProfile,inspectModernProject} from './project-profile.mjs';
+import {modernProfile,inspectModernProject,BUN_EXPO_PROFILE} from './project-profile.mjs';
 import {inspectNextProject} from './project-next.mjs';
 
 const has = p => { try { fs.lstatSync(p); return true; } catch(e) { if(e.code === 'ENOENT') return false; throw e; } };
@@ -22,6 +22,7 @@ export function inspectProject(directory = process.cwd(), {profile} = {}) {
   const declared=JSON.parse(fs.readFileSync(packageInput,'utf8'));
   if(declared.dependencies?.next && declared.dependencies?.['expo-router']) fail('Ambiguous routing frameworks: select a project with only one supported router');
   if(declared.dependencies?.next && profile===undefined) return inspectNextProject(root);
+  if(declared.dependencies?.['expo-router']&&profile===undefined&&['bun.lock','bun.lockb'].some(name=>has(path.join(root,name))))return inspectModernProject(root,{profile:BUN_EXPO_PROFILE});
   if(!declared.dependencies?.['expo-router'])fail('No supported routing profile detected. This version supports Expo Router57 and the bounded Next16.0 App Router profile; another framework requires host-owned conformance support before an agent-generated adapter can be accepted.');
   if (profile!==PROFILE&&modernProfile(root)) return inspectModernProject(root);
   const hashes = {};

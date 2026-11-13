@@ -1,13 +1,14 @@
 import {createHash, randomUUID} from 'node:crypto';
+import {json as canonicalJson} from '../extractor-pipeline/contract.mjs';
 
 export const need = (condition, message, code = 'INVALID_INPUT') => {
   if (!condition) throw Object.assign(Error(message), {code});
 };
 export const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
-const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
+const hash = value => createHash('sha256').update(canonicalJson(value)).digest('hex');
 const roles = {textfield: 'textbox', textview: 'textbox', searchfield: 'textbox', edittext: 'textbox', textarea: 'textbox', securetextfield: 'securetextbox', cell: 'button', switch: 'switch', alertdialog: 'alert'};
 const roleOf = n => { const role = String(n.role || n.type || '').toLowerCase(); return roles[role] ?? role; };
-const visible = n => n.visible !== false && n.hidden !== true && n.hiddenAbove !== true && n.hiddenBelow !== true && n.hiddenContentAbove !== true && n.hiddenContentBelow !== true;
+const visible = n => n.visible !== false && n.hidden !== true && n.hiddenAbove !== true && n.hiddenBelow !== true;
 const enabled = n => n.enabled !== false && n.disabled !== true;
 
 export function validateTarget(target) {
@@ -58,7 +59,9 @@ export function normalizeObservation(data, {target = null, id = randomUUID()} = 
   // Only a unique innermost modal authorizes actions; unordered modal roots remain ambiguous.
   const inOverlay = node => !overlays.length || (active !== null && beneath(node, active));
   const controls = nodes.filter(n => n.visible && n.enabled && n.hittable !== false && n.ref && ['button', 'link', 'textbox', 'switch', 'checkbox'].includes(n.role) && inOverlay(n));
-  const semantic = nodes.map(({ref, ...n}) => n);
+  // Native springs can change subpixel bounds on an otherwise unchanged control.
+  // Keep exact observation bounds, but compare geometry at native point precision.
+  const semantic = nodes.map(({ref, rect, ...n}) => ({...n, ...(rect ? {rect: Object.fromEntries(Object.entries(rect).map(([key, value]) => [key, typeof value === 'number' ? Math.round(value) : value]))} : {})}));
   return {schema: 'wayfinder-observation/1', id, target, capturedAt: new Date().toISOString(),
     fingerprint: hash({target, app: data.appBundleId ?? null, nodes: semantic}),
     app: data.appBundleId ?? null, nodes, controls, overlays, modalScope: {status: !overlays.length ? 'none' : active ? 'active' : 'ambiguous', activeId: active?.id ?? null}};
