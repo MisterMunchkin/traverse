@@ -22,3 +22,16 @@ test('local decision evidence preserves the exact question and answer or unavail
 test('drive emits real progress events and runtime startup retains the requested recording status',async t=>{const events=[],f=runner(t,{nodes:[{role:'button',label:'Saved',ref:'e1',hittable:true}]}),r=await drive({runner:f.runner,task:{goal:'Inspect',expect:{visible:[{label:'Saved'}]}},graph:{nodes:[]},directory:path.join(f.d,'progress'),policy:'frontier',frontier:async()=>({pick:'none'}),onProgress:e=>events.push(e.type)});assert.equal(r.status,'verified');assert.deepEqual(events,['opened','observed']);const failed=await withDecisionRuntime({directory:f.d,record:true,supervise:async()=>{throw Error('runtime not ready');},work:async()=>{throw Error('must not run');}});assert.equal(failed.recording.requested,true);assert.equal(failed.recording.status,'not-started');});
 
 test('runtime startup failure preserves a requested recording before any target opens',async t=>{const failed=await withDecisionRuntime({directory:dir(t),record:true,supervise:async()=>{throw Error('runtime unavailable');},work:async()=>{throw Error('must not open');}});assert.equal(failed.recording.requested,true);assert.equal(failed.recording.status,'not-started');});
+
+test('task actionTypes explicitly offers longpress without changing ordinary press choices', async () => {
+  const {validateTask} = await import('../src/driving/contract.mjs');
+  const o = normalizeObservation({nodes: [{type: 'Button', label: 'Hold', ref: 'e1'}]});
+  const task = {goal: 'Hold the button', expect: {visible: [{label: 'Menu'}]}, actionTypes: ['longpress']};
+  assert.doesNotThrow(() => validateTask(task));
+  assert.deepEqual(actionOptions(task, o).map(o => o.action.type), ['longpress']);
+  assert.deepEqual(actionOptions({...task, actionTypes: undefined}, o).map(o => o.action.type), ['press']);
+  assert.deepEqual(actionOptions({...task, actionTypes: ['press', 'longpress']}, o).map(o => o.action.type), ['press', 'longpress']);
+  for (const actionTypes of [[], ['delete'], ['longpress', 'longpress'], 'longpress']) assert.throws(() => validateTask({...task, actionTypes}), /actionTypes/);
+  const result = await decideAction({task, observation: o, graph: {}, policy: 'frontier', frontier: async () => ({pick: 'c0'})});
+  assert.equal(result.action.type, 'longpress');
+});

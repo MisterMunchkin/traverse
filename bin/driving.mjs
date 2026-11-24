@@ -51,6 +51,7 @@ export async function drivingMain(mode, args, {signal} = {}) {
       }
       progress('Checking the current graph and configured runners');
       const project = await drivingProject(v.project, signal);
+      validateTask(task, {graph: project.graph});
       let runtime;
       if (policy === 'local-first') {
         const {runtimeStatus} = await import('../src/model-setup.mjs'); runtime = await runtimeStatus({cacheDir: v['cache-dir'], deep: true});

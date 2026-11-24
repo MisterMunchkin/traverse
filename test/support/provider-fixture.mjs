@@ -33,8 +33,20 @@ if(${JSON.stringify(provider)}==='claude'){
  if(!args.includes('--tools')||args[args.indexOf('--tools')+1]!==''||!args.includes('--strict-mcp-config'))throw Error('Tools were not disabled');
  if(!args.includes('--model')||args[args.indexOf('--model')+1]!==model||(effort==='default'?args.includes('--effort'):args[args.indexOf('--effort')+1]!==effort))throw Error('Requested identity missing');
  const payload=JSON.parse(input);const pick=payload.options?(payload.options.find(o=>o.description.startsWith('Fill'))??payload.options[0]).id:null;const answer=payload.schema==='wayfinder-adapter-author/1'?adapterAnswer(payload):{pick:mode==='unoffered'?'private':pick};
+ if(mode.startsWith('structured-')){
+  const output=mode==='structured-extra-field'?{...answer,extra:true}:mode==='structured-wrong-type'?{pick:3}:answer;
+  const block={type:'tool_use',id:'output-1',name:mode==='structured-tool'?'Bash':'StructuredOutput',input:mode==='structured-conflict'?{pick:'none'}:output};
+  const message={model:mode==='structured-wrong-model'?'other-model':model,content:[block]};
+  if(mode==='structured-missing-model')delete message.model;
+  console.log(JSON.stringify({type:'system',subtype:'init',model,tools:mode==='structured-inventory'?['StructuredOutput','Bash']:['StructuredOutput'],mcp_servers:mode==='structured-mcp'?[{name:'unexpected'}]:[]}));
+  console.log(JSON.stringify({type:'assistant',message}));
+  if(mode==='structured-duplicate')console.log(JSON.stringify({type:'assistant',message}));
+  const modelUsage={[model]:{inputTokens:50,outputTokens:3},...(mode==='structured-auxiliary'||mode==='structured-missing-model'?{'claude-haiku-5-5':{inputTokens:7,outputTokens:1}}:{})};
+  console.log(JSON.stringify({type:'result',subtype:'success',is_error:false,structured_output:output,usage:{input_tokens:50,cache_creation_input_tokens:0,cache_read_input_tokens:0,output_tokens:3},modelUsage,total_cost_usd:.02}));
+ }else{
  console.log(JSON.stringify({type:'system',subtype:'init',model:(mode==='wrong-model'||mode==='catalog-unavailable-wrong-model')?'other-model':model,tools:[],mcp_servers:[]}));
  console.log(JSON.stringify({type:'result',subtype:'success',is_error:false,structured_output:answer,usage:{input_tokens:50,cache_creation_input_tokens:0,cache_read_input_tokens:0,output_tokens:3},modelUsage:{[model]:{inputTokens:50,outputTokens:3}},total_cost_usd:.02}));}
+}
 }else{
  if(!args.includes('web_search="disabled"'))throw Error('Codex web search was not disabled before startup');
  const lines=readline.createInterface({input:process.stdin});const send=x=>console.log(JSON.stringify(x));

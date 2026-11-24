@@ -5,7 +5,7 @@ import {runProcess} from '../runtime/process.mjs';
 import {directory, atomicJson, readJson, exists} from '../state.mjs';
 import {need, validateTarget, normalizeObservation, validateAction} from './contract.mjs';
 
-export const RUNNER_CAPABILITIES = Object.freeze({actions: ['press', 'fill', 'scroll', 'back'], recording: true,
+export const RUNNER_CAPABILITIES = Object.freeze({actions: ['press', 'longpress', 'fill', 'scroll', 'back'], recording: true,
   lifecycle: {list: true, boot: true, shutdown: true, create: false, delete: false}});
 
 export function resolveAgentDevice(selection) {
@@ -51,11 +51,11 @@ export function createAgentDeviceRunner({executable, session, directory: dir, ta
       const fresh = await observe({signal: operationSignal}); evidence.observation = fresh;
       need(fresh.fingerprint === selected.fingerprint, 'UI changed; select again from the new observation', 'STALE_OBSERVATION');
       let args;
-      if (action.type === 'press' || action.type === 'fill') {
+      if (['press', 'longpress', 'fill'].includes(action.type)) {
         const control = fresh.controls.find(c => c.id === action.target);
         need(control, 'Target is not a current enabled control', 'INVALID_TARGET');
         need(action.type !== 'fill' || control.role === 'textbox', 'Fill target must be an editable field');
-        args = action.type === 'fill' ? ['fill', control.ref, action.value] : ['press', control.ref];
+        args = action.type === 'fill' ? ['fill', control.ref, action.value] : action.type === 'longpress' ? ['longpress', control.ref, String(action.durationMs ?? 800)] : ['press', control.ref];
       } else {
         need(!fresh.overlays.length, 'Use an observed dialog control before scrolling or navigating back', 'INVALID_TARGET');
         args = action.type === 'scroll' ? ['scroll', action.direction] : ['back'];
