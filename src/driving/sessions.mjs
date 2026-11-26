@@ -18,7 +18,7 @@ function sessionLocation(project, name) {
 }
 export async function drivingProject(project = process.cwd(), signal) {
   const p = projectStatus(project), status = await checkGraph(p.root, {signal});
-  need(status.ready, 'Repository graph is stale or invalid; run traverse graph refresh');
+  need(status.ready, status.code === 'VALIDATION_TIMEOUT' ? status.reason : 'Repository graph is stale or invalid; run traverse graph refresh');
   return {root: p.root, graph: readJson(status.graph).inventory, graphStatus: status};
 }
 function wrapRunner(state, dir, options, project) {

@@ -50,6 +50,8 @@ Before dispatch, act takes another snapshot. Semantic change rejects the action 
 
 Existing session observe/act/close do not require a healthy/current source graph or parser; this allows inspection and cleanup after editing the app. New session and autonomous drive preflight require the initialized supported source profile and validated current graph. Runtime UI presence does not attest that the installed app was built from that source revision.
 
+Graph validation retains its five-second deadline. A deadline expiry reports `VALIDATION_TIMEOUT` in graph-check JSON and a timeout in human output and new-session/drive preflight, rather than claiming that the graph is stale. Readiness is still false and the exit code remains 1; no runner starts and the saved graph is unchanged. Retry `traverse graph check` after the transient condition clears. Genuine source staleness and invalid inventory retain their existing refresh guidance. Initialization's validator deadline remains a `DEADLINE` failure.
+
 ## Bounded goal execution
 
 An explicit task file supplies an observable stop condition:

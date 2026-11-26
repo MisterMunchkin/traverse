@@ -19,7 +19,8 @@ export async function graphMain(args, {signal} = {}) {
     return;
   }
   const result = mode === 'check' ? await checkGraph(v.project, {signal}) : await refreshGraph({project: v.project, accepted: v.accepted, signal, onProgress: progress(v.json)});
+  const timedOut = result.code === 'VALIDATION_TIMEOUT';
   if (v.json) console.log(JSON.stringify(result));
-  else console.error(`Traverse · ${result.ready ? 'Graph ready' : 'Graph stale or unavailable'}\n  Graph: ${result.graph}\n${result.reason ? '  ' + result.reason + '\n  Next: traverse graph refresh\n' : ''}`);
+  else console.error(`Traverse · ${result.ready ? 'Graph ready' : timedOut ? 'Graph validation timed out' : 'Graph stale or unavailable'}\n  Graph: ${result.graph}\n${result.reason ? '  ' + result.reason + '\n  Next: traverse graph ' + (timedOut ? 'check' : 'refresh') + '\n' : ''}`);
   process.exitCode = result.exitCode;
 }
