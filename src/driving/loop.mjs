@@ -21,7 +21,7 @@ export async function withDecisionRuntime({supervise, work, directory: dir, sign
 }
 
 export async function drive({runner, task, graph, directory: dir, ask, localModel, frontier, signal, maxSteps = 20, timeoutMs = 120000, policy = 'local-first', record = false, onProgress = () => {}}) {
-  validateTask(task);
+  validateTask(task, {graph});
   need(Number.isInteger(maxSteps) && maxSteps >= 1 && maxSteps <= 100, 'Step limit must be 1..100');
   need(Number.isInteger(timeoutMs) && timeoutMs >= 1 && timeoutMs <= 1800000, 'Driving timeout must be 1..1800000ms');
   need(['local-first', 'frontier'].includes(policy), 'Unknown driving policy');

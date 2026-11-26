@@ -121,3 +121,72 @@ test('unknown actions and stale observation IDs fail before any UI command', asy
   await assert.rejects(r.act({observationId: 'old', type: 'press', target: o.controls[1].id}), /observation/i);
   assert.equal(f.calls.length, 1);
 });
+
+test('native class roles and Android class types preserve semantic buttons without promoting generic views', async () => {
+  const {normalizeObservation} = await contract();
+  for (const [platform, nodes] of [
+    ['ios', [{type: 'Button', role: 'RCTViewComponentView'}, {type: 'Other', role: 'RCTViewComponentView'}]],
+    ['android', [{type: 'android.widget.Button'}, {type: 'android.widget.TextView'}, {type: 'android.view.View'}]],
+  ]) {
+    const o = normalizeObservation({nodes: nodes.map((n, i) => ({...n, label: i ? 'Text' : 'Dismiss', ref: `e${i}`, hittable: true}))}, {target: {platform}});
+    assert.deepEqual(o.controls.map(c => [c.role, c.label]), [['button', 'Dismiss']]);
+  }
+});
+
+test('native secure fields, invisible and covered ancestors, and conflicting roles fail closed', async () => {
+  const {normalizeObservation} = await contract();
+  const o = normalizeObservation({nodes: [
+    {index: 0, type: 'android.widget.EditText', password: true, value: 'secret', ref: 'e0'},
+    {index: 1, type: 'android.view.View', visibleToUser: false},
+    {index: 2, parentIndex: 1, type: 'android.widget.Button', ref: 'e2'},
+    {index: 3, type: 'android.view.View', interactionBlocked: 'covered'},
+    {index: 4, parentIndex: 3, type: 'android.widget.Button', ref: 'e4'},
+    {index: 5, type: 'Button', role: 'textbox', ref: 'e5'},
+    {index: 6, type: 'android.widget.EditText', label: 'Name', ref: 'e6'},
+  ]}, {target: {platform: 'android'}});
+  assert.deepEqual(o.controls.map(c => c.label), ['Name']);
+  assert.ok(!JSON.stringify(o).includes('secret'));
+  assert.equal(o.controls[0].role, 'textbox');
+});
+
+test('longpress uses refreshed native refs, bounded duration and observes after release', async t => {
+  const screen = suffix => ({nodes: [{type: 'Button', role: 'RCTViewComponentView', label: 'Hold', ref: 'e1' + suffix}]});
+  const f = fixture(t, [screen(''), screen('~s8'), screen('~s9')]);
+  const {createAgentDeviceRunner} = await load();
+  const r = createAgentDeviceRunner({executable: '/fixture/ad', session: 'owned', directory: f.dir, target: {platform: 'ios', app: 'fixture', device: 'UDID'}, execute: f.execute});
+  const o = await r.observe();
+  const result = await r.act({observationId: o.id, type: 'longpress', target: 'control-0', durationMs: 900});
+  assert.equal(result.execution, 'acknowledged');
+  assert.equal(result.effect, 'unverified');
+  assert.deepEqual(f.calls.map(c => c.args[0]), ['snapshot', 'snapshot', 'longpress', 'snapshot']);
+  assert.deepEqual(f.calls[2].args.slice(0, 3), ['longpress', '@e1~s8', '900']);
+  assert.ok(r.capabilities.actions.includes('longpress'));
+});
+
+test('longpress validates duration and does not retry uncertain dispatch', async t => {
+  const {validateAction} = await contract();
+  const action = {observationId: 'o', type: 'longpress', target: 'control-2'};
+  assert.doesNotThrow(() => validateAction(action));
+  for (const durationMs of [0, -1, 10001, 1.5, '800', null]) assert.throws(() => validateAction({...action, durationMs}), /duration/i);
+  assert.throws(() => validateAction({...action, type: 'press', durationMs: 800}), /fields/i);
+  const f = fixture(t, [web(), web('', '~s8')], args => args[0] === 'longpress');
+  const {createAgentDeviceRunner} = await load();
+  const r = createAgentDeviceRunner({executable: '/fixture/ad', session: 'owned', directory: f.dir, target: {platform: 'web', app: 'http://fixture'}, execute: f.execute});
+  const o = await r.observe();
+  await assert.rejects(r.act({...action, observationId: o.id}), e => {
+    assert.equal(e.actionEvidence.execution, 'uncertain'); return true;
+  });
+  assert.deepEqual(f.calls.find(c => c.args[0] === 'longpress').args.slice(0, 3), ['longpress', '@e2~s8', '800']);
+  assert.equal(f.calls.filter(c => c.args[0] === 'longpress').length, 1);
+});
+
+test('conflicting native modal roles reject the observation instead of exposing background controls', async () => {
+  const {normalizeObservation} = await contract();
+  for (const [type, role, password] of [['Dialog', 'alert'], ['Dialog', 'button'], ['SecureTextField', 'alert'], ['Dialog', 'RCTViewComponentView', true]]) {
+    assert.throws(() => normalizeObservation({nodes: [
+      {index: 0, type, role, password},
+      {index: 1, parentIndex: 0, type: 'Button', label: 'Cancel', ref: 'e1'},
+      {index: 2, type: 'Button', label: 'Background Delete', ref: 'e2'},
+    ]}, {target: {platform: 'ios'}}), /modal/i);
+  }
+});

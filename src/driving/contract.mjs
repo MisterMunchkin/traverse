@@ -6,9 +6,22 @@ export const need = (condition, message, code = 'INVALID_INPUT') => {
 export const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const roles = {textfield: 'textbox', textview: 'textbox', searchfield: 'textbox', edittext: 'textbox', textarea: 'textbox', securetextfield: 'securetextbox', cell: 'button', switch: 'switch', alertdialog: 'alert'};
-const roleOf = n => { const role = String(n.role || n.type || '').toLowerCase(); return roles[role] ?? role; };
-const visible = n => n.visible !== false && n.hidden !== true && n.hiddenAbove !== true && n.hiddenBelow !== true && n.hiddenContentAbove !== true && n.hiddenContentBelow !== true;
-const enabled = n => n.enabled !== false && n.disabled !== true;
+const androidRoles = {'android.widget.button': 'button', 'android.widget.imagebutton': 'button', 'android.widget.edittext': 'textbox', 'android.widget.switch': 'switch', 'android.widget.checkbox': 'checkbox', 'android.app.alertdialog': 'alert', 'android.app.dialog': 'dialog'};
+const semanticRoles = new Set(['button', 'link', 'textbox', 'securetextbox', 'switch', 'checkbox', 'alert', 'dialog']);
+function roleOf(n, platform) {
+  const rawRole = String(n.role ?? '').toLowerCase(), rawType = String(n.type ?? '').toLowerCase();
+  const normalize = raw => androidRoles[raw] ?? roles[raw] ?? raw;
+  const role = normalize(rawRole), type = normalize(rawType);
+  const conflict = semanticRoles.has(role) && semanticRoles.has(type) && role !== type;
+  if (platform !== 'web' && ['alert', 'dialog'].some(modal => role === modal || type === modal))
+    need(!conflict && n.password !== true, 'Conflicting native modal semantics', 'INVALID_OBSERVATION');
+  if (n.password === true || role === 'securetextbox' || type === 'securetextbox') return 'securetextbox';
+  if (platform === 'web') return role || type;
+  if (conflict) return 'unknown';
+  return semanticRoles.has(type) ? type : semanticRoles.has(role) ? role : rawRole || rawType;
+}
+const visible = n => n.visible !== false && n.visibleToUser !== false && n.hidden !== true && n.hiddenAbove !== true && n.hiddenBelow !== true && n.hiddenContentAbove !== true && n.hiddenContentBelow !== true;
+const enabled = n => n.enabled !== false && n.disabled !== true && n.interactionBlocked !== 'covered';
 
 export function validateTarget(target) {
   need(object(target) && ['web', 'ios', 'android'].includes(target.platform), 'Choose platform web, ios or android');
@@ -26,7 +39,7 @@ export function normalizeObservation(data, {target = null, id = randomUUID()} = 
   need(Array.isArray(data.nodes) && data.nodes.length > 0 && data.nodes.length <= 10000, 'Snapshot has no usable nodes', 'INVALID_OBSERVATION');
   const nodes = data.nodes.map((n, i) => {
     need(object(n), 'Malformed snapshot node', 'INVALID_OBSERVATION');
-    const role = roleOf(n), rawRef = n.ref;
+    const role = roleOf(n, target?.platform), rawRef = n.ref;
     const ref = typeof rawRef === 'string' && rawRef ? (rawRef.startsWith('@') ? rawRef : '@' + rawRef) : null;
     need(ref === null || /^@e\d+(?:~s\d+)?$/.test(ref), 'Unsupported snapshot reference', 'INVALID_OBSERVATION');
     return {id: 'control-' + i, index: n.index ?? i, parent: n.parentIndex ?? null, role, label: String(n.label ?? ''),
@@ -67,9 +80,11 @@ export function normalizeObservation(data, {target = null, id = randomUUID()} = 
 export function validateAction(action) {
   need(object(action), 'Action must be an object');
   need(typeof action.observationId === 'string' && action.observationId, 'Action requires observationId');
-  need(['press', 'fill', 'scroll', 'back'].includes(action.type), 'Unsupported action type');
-  const keys = ['observationId', 'type', ...(['press', 'fill'].includes(action.type) ? ['target'] : []), ...(action.type === 'fill' ? ['value'] : action.type === 'scroll' ? ['direction'] : [])];
-  need(Object.keys(action).every(k => keys.includes(k)) && keys.every(k => Object.hasOwn(action, k)), 'Action has unknown or missing fields');
+  need(['press', 'longpress', 'fill', 'scroll', 'back'].includes(action.type), 'Unsupported action type');
+  const keys = ['observationId', 'type', ...(['press', 'longpress', 'fill'].includes(action.type) ? ['target'] : []), ...(action.type === 'fill' ? ['value'] : action.type === 'scroll' ? ['direction'] : [])];
+  const optional = action.type === 'longpress' ? ['durationMs'] : [];
+  need(Object.keys(action).every(k => keys.includes(k) || optional.includes(k)) && keys.every(k => Object.hasOwn(action, k)), 'Action has unknown or missing fields');
+  if (Object.hasOwn(action, 'durationMs')) need(Number.isInteger(action.durationMs) && action.durationMs >= 1 && action.durationMs <= 10000, 'Longpress durationMs must be an integer from 1 to 10000');
   if (keys.includes('target')) need(typeof action.target === 'string' && action.target, 'Action target is required');
   if (action.type === 'fill') need(typeof action.value === 'string' && action.value.length <= 10000, 'Fill needs a bounded string value');
   if (action.type === 'scroll') need(['up', 'down', 'top', 'bottom'].includes(action.direction), 'Invalid scroll direction');
@@ -80,9 +95,23 @@ function selector(s) {
   need(object(s) && Object.keys(s).length > 0 && Object.entries(s).every(([k, v]) => ['label', 'role', 'identifier', 'value'].includes(k) && typeof v === 'string'), 'Expectation needs an exact nonempty UI selector');
 }
 export const matches = (node, s) => Object.entries(s).every(([key, value]) => node[key] === value);
-export function validateTask(task) {
+export function validateScreenMap(screenMap, graph) {
+  if (screenMap === undefined) return;
+  need(object(screenMap) && Object.keys(screenMap).length > 0 && Object.keys(screenMap).length <= 256, 'screenMap must map 1..256 graph routes to visible selectors');
+  for (const [route, selectors] of Object.entries(screenMap)) {
+    need(route.startsWith('/') && route.length <= 1000 && !/[\x00-\x1f]/.test(route), 'screenMap requires graph route IDs');
+    need(Array.isArray(selectors) && selectors.length > 0 && selectors.length <= 8, 'screenMap routes need 1..8 visible selectors');
+    for (const s of selectors) {
+      need(object(s) && Object.entries(s).every(([key, value]) => ['label', 'role', 'identifier', 'value'].includes(key) && typeof value === 'string' && value.length <= 1000) && (s.label?.trim() || s.identifier?.trim()), 'screenMap selectors need a nonempty label or identifier and exact bounded string fields');
+    }
+    if (graph !== undefined) need(Array.isArray(graph?.nodes) && graph.nodes.filter(n => n.id === route).length === 1, `screenMap route is not a unique graph node: ${route}`);
+  }
+}
+export function validateTask(task, {graph} = {}) {
   need(object(task) && typeof task.goal === 'string' && task.goal.trim() && task.goal.length <= 20000, 'Task requires a bounded goal');
-  need(Object.keys(task).every(k => ['goal', 'inputs', 'expect'].includes(k)), 'Unknown task field');
+  need(Object.keys(task).every(k => ['goal', 'inputs', 'expect', 'actionTypes', 'screenMap'].includes(k)), 'Unknown task field');
+  validateScreenMap(task.screenMap, graph);
+  if (task.actionTypes !== undefined) need(Array.isArray(task.actionTypes) && task.actionTypes.length > 0 && new Set(task.actionTypes).size === task.actionTypes.length && task.actionTypes.every(type => ['press', 'fill', 'longpress'].includes(type)), 'actionTypes must be a nonempty unique list of press, fill or longpress');
   need(task.inputs === undefined || (object(task.inputs) && Object.values(task.inputs).every(v => typeof v === 'string' && v.length <= 10000)), 'Task inputs must map field labels or identifiers to text');
   need(object(task.expect) && Object.keys(task.expect).every(k => ['visible', 'absent', 'fields'].includes(k)), 'Task needs observable expectations');
   let total = 0;

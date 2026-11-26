@@ -107,3 +107,18 @@ test('SIGINT cancels a pending open, closes only the owned session and exits wit
   assert.equal(fs.existsSync(path.join(f.project, '.wayfinder/local/sessions/cancel/session.lock')), false);
   assert.equal(calls(f).filter(c => c.args[0] === 'close').length, 1);
 });
+
+test('CLI validates screenMap routes before session startup and preserves edits through mapped driving', t => {
+  const f = drivingFixture(t); run(f, ['init', '--json']);
+  const original = JSON.parse(fs.readFileSync(f.task));
+  const args = ['drive', '--task', f.task, '--session', 'mapped', '--platform', 'web', '--app', 'http://fixture', '--policy', 'frontier', '--frontier-config', f.config, ...flags(f)];
+  fs.writeFileSync(f.task, JSON.stringify({...original, screenMap: {'/missing-route': [{role: 'heading', label: 'Edit profile'}]}}));
+  assert.match(run(f, args, 1).error, /screenMap/);
+  assert.equal(fs.existsSync(f.log), false);
+  assert.equal(fs.existsSync(path.join(f.project, '.wayfinder/local/sessions')), false);
+  fs.writeFileSync(f.task, JSON.stringify({...original, screenMap: {'/': [{role: 'heading', label: 'Edit profile'}]}}));
+  const result = run(f, args);
+  assert.equal(result.status, 'verified');assert.equal(result.steps, 2);
+  const ui = Object.values(JSON.parse(fs.readFileSync(f.state)))[0];
+  assert.equal(ui.committed, 'Updated');assert.equal(ui.active, false);
+});

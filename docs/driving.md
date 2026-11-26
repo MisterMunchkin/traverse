@@ -30,6 +30,8 @@ traverse session close --session checkout-1 --json
 
 Native open additionally requires `--platform ios|android --device ACTUAL_ID --app ACTUAL_BUNDLE_OR_PACKAGE`. Choose a fresh session name for each open. State/evidence is automatically created beneath `.wayfinder/local/sessions/NAME`, which init ignores. Sessions operate serially under an exclusive lock. A failed/closed name is retained as evidence rather than overwritten.
 
+Native semantic types are normalized independently of native class roles, with explicit supported Android widget mappings. Generic views are not assumed to be buttons; conflicting native semantics fail closed. Password fields, `visibleToUser: false`, and covered ancestors retain their restrictions.
+
 An observation includes `id`, capture time, explicit target, semantic fingerprint, normalized nodes, enabled/visible current controls and overlays. One unfiltered `snapshot --json` supplies both semantic verification and its own current refs; an interactive-only projection cannot prove text absence. It captures accessibility/DOM information now; it does not continuously watch the device. `graph watch` separately monitors repository sources. No route is inferred merely because it exists in source. Unrecognized/OS surfaces remain observed UI.
 
 Example action file, using IDs returned by the actual observation:
@@ -38,7 +40,7 @@ Example action file, using IDs returned by the actual observation:
 {"observationId":"ACTUAL_OBSERVATION_ID","type":"press","target":"ACTUAL_CONTROL_ID"}
 ```
 
-For text use `type: "fill"` and `value`; scrolling uses `type: "scroll", direction: "down"` (also up/top/bottom); navigation uses `type: "back"`. Unknown fields/actions are rejected. Secure fields are not offered for automated text entry. When a native target specifies a bundle identifier and the snapshot reports a different bundle identifier, the observation is rejected even if it contains a dialog. A dialog does not grant authority over another application; a system-owned permission surface reporting another bundle remains rejected. Only the unique innermost active dialog authorizes controls; independent modal scopes with no provable order offer none. Noninteractive containers do not inherit their own lack of hittability into actionable descendants.
+For a hold use `type: "longpress"`, the current `target`, and optional integer `durationMs` (1–10000; default 800). The command releases before the next observation: a post-action snapshot does not verify appearance during the hold. For text use `type: "fill"` and `value`; scrolling uses `type: "scroll", direction: "down"` (also up/top/bottom); navigation uses `type: "back"`. Unknown fields/actions are rejected. Secure fields are not offered for automated text entry. When a native target specifies a bundle identifier and the snapshot reports a different bundle identifier, the observation is rejected even if it contains a dialog. A dialog does not grant authority over another application; a system-owned permission surface reporting another bundle remains rejected. Only the unique innermost active dialog authorizes controls; independent modal scopes with no provable order offer none. Noninteractive containers do not inherit their own lack of hittability into actionable descendants.
 
 Before dispatch, act takes another snapshot. Semantic change rejects the action with a new observation; unchanged semantics use newly captured opaque refs, including any snapshot pin. There remains a race between the final check and platform dispatch. No atomic UI guarantee is implied. A command acknowledgement and its subsequent observation are separate receipt fields. A timeout after dispatch leaves the effect uncertain and never automatically repeats the mutation.
 
@@ -59,6 +61,8 @@ An explicit task file supplies an observable stop condition:
 }
 ```
 
+Task `actionTypes` optionally selects a nonempty unique list of `press`, `fill`, and `longpress`; the default is `["press", "fill"]`. For a hold journey, use `"actionTypes": ["longpress"]` (or include press/fill for a mixed journey). Autonomous holds use 800 ms; manual action files can choose a bounded duration. The model receives explicit hold choices rather than inferring gestures from prose.
+
 Selectors match exact label/role/identifier/value. All expectations must hold; fields must resolve uniquely. `absent` is also available. Expectations describe only the visible UI supplied by the snapshot; verifying durable database state requires a separately specified observable workflow. Inputs map exact field identifiers or labels to text; ambiguous/unmatched fields are not filled.
 
 ```sh
@@ -66,7 +70,32 @@ traverse drive --task /absolute/task.json --session profile-1 \
   --platform web --app http://127.0.0.1:8081 --record --json
 ```
 
-Local-first requires an already verified `traverse setup` cache (`--cache-dir` overrides). It uses an owned pinned Ollama process bound to loopback, with an unauthenticated local API, and stops that owned process group. There is no implicit model download or attachment to a shared daemon. Each decision includes one shared graph, current UI and the last eight actions. The local policy uses the researched 0.819 margin, confidence floor0, 1500 estimated token ceiling and23-control limit. One control also gets an abstention option. Too many controls/context, model outage or uncertain choice escalates without silently truncating the choices.
+Local-first requires an already verified `traverse setup` cache (`--cache-dir` overrides). It uses an owned pinned Ollama process bound to loopback, with an unauthenticated local API, and stops that owned process group. There is no implicit model download or attachment to a shared daemon. Each decision includes one shared graph projection, current UI and the last eight actions. Source provenance stays in the full graph saved in `inputs.json`; decision receipts bind the projection to its SHA-256. The policy first removes provenance without dropping semantic facts. Without a screen map, if still oversized, it retrieves all exact control-label or explicit goal-route/title matches, their owner facts, referenced nodes, guards, registrations, unresolved facts and automatic redirects. Retrieved context records omitted counts and never claims an observed current route. No reliable seed, or relevant facts that still exceed the budget, causes escalation. It does not silently remove controls, shorten the goal, or infer that omitted routes are irrelevant. The local policy uses the researched 0.819 margin, confidence floor 0, 1500 estimated token ceiling and 23-option limit. One control also gets an abstention option. Too many controls/context, model outage or uncertain choice escalates without silently truncating the choices.
+
+### Moving screen windows
+
+An optional task `screenMap` anchors each decision to freshly observed UI. Keys are exact **graph node IDs**, including route groups; they are not inferred URLs or a declaration that navigation succeeded. Values are conjunctions of exact visible selectors:
+
+```json
+{
+  "goal": "Dismiss the notice, then open the profile",
+  "screenMap": {
+    "/": [{"identifier": "welcome-screen"}],
+    "/profile": [{"role": "heading", "label": "Profile"}]
+  },
+  "expect": {"visible": [{"role": "heading", "label": "Profile"}]}
+}
+```
+
+Replace these example routes and markers with those from your graph and current snapshots. Prefer stable accessibility identifiers (`testID` when exposed as an identifier); distinct headings can also work. No app instrumentation is installed automatically. A map is a task author's declared association, **not runtime router attestation**. Receipts record `visible-selector-match`, the observation and matching node IDs, map/graph hashes, and `runtimeRouteVerified: false`.
+
+A map supports 1–256 routes with 1–8 selectors each. Every selector needs a nonempty label or identifier; role/value may narrow it. Fields match exactly and are bounded to 1000 characters. All route IDs must exist uniquely in the graph before a session opens. Every selector for a route must match a visible node, and only one route may be plausible. Duplicate markers remain ambiguous even when another route has unique markers. Hidden ancestors count as hidden; a dialog can sit above a still-visible underlying screen marker.
+
+For a unique match, the window includes that route's outgoing edges, immediate destination nodes, their guards/registrations, unresolved alternatives and automatic redirect closure. Source sites are included only at the precise locations of retained edges/unresolved facts. Global visible banners and dialogs remain in UI context even when their buttons have no navigation edge. Window metadata records omitted counts; it does not assert that omitted routes cannot matter to the wider goal.
+
+The full goal, all offered choices, visible UI facts, modal scope and up to eight recent actions reserve space first; the graph uses the remaining estimated 1500-token budget. Model UI rows omit refs, geometry, the always-true visibility flag, and null parent/identifier/value fields; absent parent means a root and absent identifier/value means unavailable. Labels, non-null values, hierarchy, enabled state and false/unknown hittability remain. Full observations and the complete graph stay in local evidence.
+
+The window is rebuilt after every observation; a previous match is never reused. Missing or competing evidence produces `SCREEN_UNKNOWN` or `SCREEN_AMBIGUOUS` and bypasses local inference even for a small graph. An essential window that still cannot fit produces `CONTEXT_LIMIT`. Frontier requests and saved frontier handoffs expand a screen window back to the complete semantic graph, retaining the identity uncertainty and the original window receipt under `context.window` (including its budget and omissions). Expectations still determine completion independently; an action acknowledgement does not establish a new screen. Without `screenMap`, conservative label/goal retrieval continues as before.
 
 Without a configured frontier provider or command, escalation returns exit2 and a saved self-contained brief. The run closes its session; this is a decision report, not a resumable paused execution. Use a newly observed session for subsequent manual actions, or run `traverse init` before running. No task is declared complete without the explicit expected UI state.
 
