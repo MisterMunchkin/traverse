@@ -56,7 +56,7 @@ export function existingSession(project, options) {
   validateTarget(state.target);
   const executable = resolveAgentDevice(options.executable);
   const closeCommand = [process.execPath, fileURLToPath(new URL('../../bin/traverse.mjs', import.meta.url)), 'session', 'close', '--project', path.resolve(project), '--session', state.name, '--agent-device', state.executable].map(shellQuote).join(' ');
-  need(executable === state.executable, `Selected session runner differs from the recorded executable; no cleanup was attempted. Retry with: ${closeCommand}`);
+  need(executable === state.executable, `Selected session runner differs from the recorded executable; no operation was attempted. To close this session without device shutdown, run: ${closeCommand}`);
   need(hash(executable) === state.executableSha256, 'Session runner executable changed; restore its recorded bytes before continuing');
   return {state, directory: dir, runner: wrapRunner(state, dir, options, project)};
 }

@@ -38,10 +38,10 @@ function withPath(value, work) {
   finally { if (before === undefined) delete process.env.PATH; else process.env.PATH = before; }
 }
 
-test('saved session metadata cannot override the currently selected PATH runner', t => {
+test('PATH mismatch rejects the saved runner and offers explicit session-only cleanup', t => {
   const f = fixture(t); f.metadata(f.saved);
   withPath(f.selectedDir, () => {
-    assert.throws(() => existingSession(f.project, {name: 'fixture'}), /runner executable changed/i);
+    assert.throws(() => existingSession(f.project, {name: 'fixture'}), /Selected session runner differs.*To close this session without device shutdown, run:/i);
   });
 });
 test('saved session metadata cannot supply a runner when current discovery finds none', t => {

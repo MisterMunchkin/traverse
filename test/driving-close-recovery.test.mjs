@@ -27,7 +27,10 @@ test('PATH mismatch gives a literal close command while hash changes still refus
   const json = run([...args, '--json'], 1); assert.equal(json.stderr, '');
   const error = JSON.parse(json.stdout); assert.equal(error.exitCode, 1);
   assert.match(error.error, /selected.*runner.*differs/i);
-  const command = error.error.split('Retry with: ')[1]; assert.ok(command);
+  const observed = JSON.parse(run(['session', 'observe', '--session', 'owned', '--json'], 1).stdout);
+  assert.match(observed.error, /To close this session without device shutdown, run:/);
+  assert.doesNotMatch(observed.error, /Retry with/);
+  const command = error.error.split('To close this session without device shutdown, run: ')[1]; assert.ok(command);
   const human = run(args, 1); assert.equal(human.stdout, ''); assert.ok(human.stderr.includes(command));
   assert.equal(calls().length, before); assert.equal(state()[first.runnerSession].active, true);
   fs.appendFileSync(original, '\n// changed bytes');
