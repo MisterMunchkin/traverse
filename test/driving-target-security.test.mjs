@@ -7,7 +7,7 @@ const dialog = (appBundleId, role) => ({appBundleId, nodes: [
   {index: 1, role, label: 'Edit profile'},
   {index: 2, parentIndex: 1, role: 'textbox', label: 'Name', value: '', ref: 'e2'},
   {index: 3, parentIndex: 1, role: 'button', label: 'Save', ref: 'e3'},
-]});
+].map(node => ({...node, bundleId: appBundleId}))});
 
 for (const platform of ['ios', 'android']) {
   const target = {platform, app: 'com.traverse.requested', device: 'SYNTHETIC-DEVICE'};
