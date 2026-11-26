@@ -123,7 +123,7 @@ Usage and cost are optional and retained as unknown when absent. Only `pick` is 
 
 `status: verified` requires all live UI expectations and successful cleanup. Timeouts/failures remain failed attempts. Acknowledged but unobserved actions remain uncertain. Model-server teardown or recording/close failure cannot leave a successful final report. Recording success requires a nonempty saved artifact; `playbackVerified: false` distinguishes saved bytes from verified playable video. Offline tests use fixture media, not real recordings.
 
-`elapsedMs` is the driving phase including app/session cleanup; `timings` also records preflight and total wall time including model startup/teardown. Accounting records local/frontier call counts, reported tokens and cost. Missing usage/cost is null with incomplete accounting. Reported cost covers frontier charges only; local compute cost is not priced. Standard exit codes:0 verified/success,1 failed/timeout,2 frontier handoff,130 cancellation (SIGTERM launcher exits143).
+`elapsedMs` is the driving phase including app/session cleanup; `timings` also records preflight and total wall time including model startup/teardown. Accounting records local/frontier call counts, reported tokens and cost. Missing usage/cost is null with incomplete accounting. `costUsd` retains the existing callback-reported cost contract; built-in subscription clients leave it null and do not infer subscription charges. Local compute cost is not priced. Standard exit codes:0 verified/success,1 failed/timeout,2 frontier handoff,130 cancellation (SIGTERM launcher exits143).
 
 Doctor checks configuration readiness. Native UI validation status belongs in the run evidence and this coverage record; it is not an installation failure or a doctor gate. Installing a new archive is an explicit package update; it does not silently replace an existing global installation.
 
@@ -136,3 +136,9 @@ Managed official model acquisition and actual constrained-choice inference have 
 Use a disposable development session with synthetic inputs. Read the
 [security guidelines](security.md) for local model peer access, browser
 navigation/frame limits, provider data sharing and private evidence handling.
+
+### Provider-reported accounting
+
+Claude's result-message counters are also retained separately in drive accounting: `frontierReportedInputTokens` sums `input_tokens`, `cache_creation_input_tokens` and `cache_read_input_tokens` exactly once; `frontierReportedOutputTokens` retains `output_tokens`. `frontierReportedCacheCreationInputTokens` and `frontierReportedCacheReadInputTokens` expose the cache subtotals already included in that input total. `frontierReportedApiCostUsd` sums the reported `total_cost_usd` API-equivalent cost, **not subscription charges**. These fields describe provider result reports, not independently verified usage, decision-model attribution or an all-model total. Per-model breakdowns remain in the request receipts; they are never added to overlapping result counters.
+
+No frontier calls means zero. Once a call is attempted, each absent or invalid metric is null; any incomplete call makes that aggregate metric null, even if other calls supplied it. An input total requires all three input components, including explicit cache zeros. Failed requests remain unknown. Clients or callbacks without these reports leave the new fields null after a call. The existing `complete` flag describes the original attributed usage/cost fields; a populated provider report does not make unknown attribution complete.
