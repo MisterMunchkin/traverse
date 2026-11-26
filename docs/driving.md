@@ -46,6 +46,8 @@ Before dispatch, act takes another snapshot. Semantic change rejects the action 
 
 Existing session observe/act/close do not require a healthy/current source graph or parser; this allows inspection and cleanup after editing the app. New session and autonomous drive preflight require the initialized supported source profile and validated current graph. Runtime UI presence does not attest that the installed app was built from that source revision.
 
+Session cleanup requires the same resolved runner path and executable hash recorded at open. If PATH selects a different runner (for example under `npx`), close fails with exit 1 and prints a literal recovery command selecting the recorded runner and project. That command uses the current Node and Traverse package paths, so it does not depend on a global `traverse` command. Run it only after inspecting the mismatch; the recorded hash is still checked. Changed bytes must be restored before cleanup. No saved executable is automatically selected or run, and the session remains open until cleanup succeeds.
+
 ## Bounded goal execution
 
 An explicit task file supplies an observable stop condition:
