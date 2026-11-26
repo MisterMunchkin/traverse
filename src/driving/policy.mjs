@@ -3,10 +3,11 @@ import {MODEL_PINS} from '../model-setup.mjs';
 import {need} from './contract.mjs';
 import {decisionContext, matchScreen, observedContext} from './context.mjs';
 
-export const emptyAccounting = () => ({localCalls: 0, frontierCalls: 0, localInputTokens: 0, frontierInputTokens: 0, frontierOutputTokens: 0, costUsd: 0, complete: true});
+const reportedKeys = ['frontierReportedInputTokens', 'frontierReportedOutputTokens', 'frontierReportedCacheCreationInputTokens', 'frontierReportedCacheReadInputTokens', 'frontierReportedApiCostUsd'];
+export const emptyAccounting = () => ({localCalls: 0, frontierCalls: 0, localInputTokens: 0, frontierInputTokens: 0, frontierOutputTokens: 0, costUsd: 0, ...Object.fromEntries(reportedKeys.map(key => [key, 0])), complete: true});
 export function addAccounting(total, part) {
   for (const key of ['localCalls', 'frontierCalls']) total[key] += part[key];
-  for (const key of ['localInputTokens', 'frontierInputTokens', 'frontierOutputTokens', 'costUsd']) total[key] = total[key] === null || part[key] === null ? null : total[key] + part[key];
+  for (const key of ['localInputTokens', 'frontierInputTokens', 'frontierOutputTokens', 'costUsd', ...reportedKeys]) total[key] = total[key] === null || part[key] === null ? null : total[key] + part[key];
   total.complete = total.complete && part.complete;
 }
 const quantity = n => Number.isFinite(n) && n >= 0 ? n : null;
@@ -91,9 +92,17 @@ export async function decideAction({task, observation, graph, history = [], poli
     if (!frontier) return escalation(localEscalation?.code ?? 'FRONTIER_REQUIRED');
     const responseSchema = {type: 'object', properties: {pick: {type: 'string', enum: [...options.map(o => o.id), 'none']}}, required: ['pick'], additionalProperties: false};
     accounting.frontierCalls++; accounting.frontierInputTokens = null; accounting.frontierOutputTokens = null; accounting.costUsd = null; accounting.complete = false;
+    for (const key of reportedKeys) accounting[key] = null;
     const result = await frontier({...handoff(), responseSchema, signal});
     need(result && (result.pick === 'none' || offered.some(o => o.id === result.pick)), 'Frontier choice was not offered');
     accounting.frontierInputTokens = quantity(result.usage?.inputTokens); accounting.frontierOutputTokens = quantity(result.usage?.outputTokens); accounting.costUsd = quantity(result.costUsd);
+    const reported = result.reportedUsage ?? {};
+    const input = [reported.input_tokens, reported.cache_creation_input_tokens, reported.cache_read_input_tokens].map(quantity);
+    accounting.frontierReportedInputTokens = input.every(n => n !== null) ? input.reduce((a, b) => a + b, 0) : null;
+    accounting.frontierReportedOutputTokens = quantity(reported.output_tokens);
+    accounting.frontierReportedCacheCreationInputTokens = quantity(reported.cache_creation_input_tokens);
+    accounting.frontierReportedCacheReadInputTokens = quantity(reported.cache_read_input_tokens);
+    accounting.frontierReportedApiCostUsd = quantity(result.reportedApiCostUsd);
     accounting.complete = [accounting.localInputTokens, accounting.frontierInputTokens, accounting.frontierOutputTokens, accounting.costUsd].every(n => n !== null);
     if (result.pick === 'none') return escalation('FRONTIER_NONE');
     return {kind: 'act', via: 'frontier', localEvidence, action: offered.find(o => o.id === result.pick).action, accounting, ...(localEscalation ? {localEscalation} : {})};
