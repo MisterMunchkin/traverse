@@ -23,6 +23,46 @@ function roleOf(n, platform) {
 const visible = n => n.visible !== false && n.visibleToUser !== false && n.hidden !== true && n.hiddenAbove !== true && n.hiddenBelow !== true && n.hiddenContentAbove !== true && n.hiddenContentBelow !== true;
 const enabled = n => n.enabled !== false && n.disabled !== true && n.interactionBlocked !== 'covered';
 
+// Android's top-level appBundleId can describe the session's requested app even
+// after another app opens. Node ownership is required before projecting app UI.
+function androidAppNodes(nodes, target) {
+  const system = 'com.android.systemui';
+  const indexed = new Map(nodes.map((n, i) => [n.index ?? i, n]));
+  need(indexed.size === nodes.length, 'Snapshot indexes are ambiguous', 'INVALID_OBSERVATION');
+  const roots = new Map();
+  for (const [index, node] of indexed) {
+    need(typeof node.bundleId === 'string' && node.bundleId.length > 0, 'Android foreground ownership is unknown; snapshot nodes need bundleId', 'INVALID_OBSERVATION');
+    need(node.bundleId === target.app || node.bundleId === system, 'Snapshot belongs to another app', 'INVALID_OBSERVATION');
+    let root = node;
+    const seen = new Set([index]);
+    while (root.parentIndex !== undefined && root.parentIndex !== null) {
+      const parent = indexed.get(root.parentIndex);
+      need(parent && !seen.has(root.parentIndex) && parent.bundleId === node.bundleId, 'Android snapshot hierarchy has unknown or conflicting ownership', 'INVALID_OBSERVATION');
+      seen.add(root.parentIndex); root = parent;
+    }
+    roots.set(node, root);
+  }
+  const statusRoots = new Set(['clock', 'mobile_combo', 'battery'].map(id => `${system}:id/${id}`));
+  const validRect = r => object(r) && ['x', 'y', 'width', 'height'].every(k => Number.isFinite(r[k])) && r.width > 0 && r.height > 0;
+  const statusBands = nodes.filter(n => roots.get(n) === n && n.bundleId === system && statusRoots.has(n.identifier) && validRect(n.rect)).map(n => n.rect);
+  for (const n of nodes.filter(n => n.bundleId === system)) {
+    const root = roots.get(n), role = roleOf(n, 'android');
+    const navigation = root.identifier === `${system}:id/navigation_bar_frame` && root.type === 'android.widget.FrameLayout';
+    const status = statusRoots.has(root.identifier) && ['android.widget.TextView', 'android.widget.FrameLayout', 'android.widget.LinearLayout'].includes(root.type);
+    // Android may expose status icons as independent, identifier-less roots.
+    // Accept only noninteractive images in a known status bar's vertical band.
+    const icon = root.type === 'android.widget.ImageView' && (!root.identifier || root.identifier === `${system}:id/wifi_signal`) && validRect(root.rect) && statusBands.some(r => root.rect.y >= r.y && root.rect.y + root.rect.height <= r.y + r.height);
+    need((navigation || status || icon) && !['alert', 'dialog', 'textbox', 'securetextbox'].includes(role) &&
+      (navigation || (!semanticRoles.has(role) && n.hittable !== true && n.editable !== true)),
+    'Android system surface is not recognized passive chrome; foreground ownership is unknown', 'INVALID_OBSERVATION');
+  }
+  const appNodes = nodes.filter(n => n.bundleId === target.app);
+  need(appNodes.some(n => visible(n)), 'Android foreground ownership is unknown; no requested-app nodes', 'INVALID_OBSERVATION');
+  // Keep app-relative identities stable when chrome nodes are inserted/removed.
+  const positions = new Map(appNodes.map((n, i) => [n.index ?? nodes.indexOf(n), i]));
+  return appNodes.map((n, i) => ({...n, index: i, parentIndex: n.parentIndex == null ? null : positions.get(n.parentIndex)}));
+}
+
 export function validateTarget(target) {
   need(object(target) && ['web', 'ios', 'android'].includes(target.platform), 'Choose platform web, ios or android');
   need(typeof target.app === 'string' && target.app.trim() && !target.app.startsWith('-') && !target.app.includes('\0'), 'An explicit app or URL is required');
@@ -37,14 +77,17 @@ export function validateTarget(target) {
 export function normalizeObservation(data, {target = null, id = randomUUID()} = {}) {
   need(object(data) && data.truncated !== true, 'A truncated observation cannot be used', 'INVALID_OBSERVATION');
   need(Array.isArray(data.nodes) && data.nodes.length > 0 && data.nodes.length <= 10000, 'Snapshot has no usable nodes', 'INVALID_OBSERVATION');
-  const nodes = data.nodes.map((n, i) => {
+  need(data.nodes.every(object), 'Malformed snapshot node', 'INVALID_OBSERVATION');
+  const sourceNodes = target?.platform === 'android' && target.app ? androidAppNodes(data.nodes, target) : data.nodes;
+  const nodes = sourceNodes.map((n, i) => {
     need(object(n), 'Malformed snapshot node', 'INVALID_OBSERVATION');
     const role = roleOf(n, target?.platform), rawRef = n.ref;
     const ref = typeof rawRef === 'string' && rawRef ? (rawRef.startsWith('@') ? rawRef : '@' + rawRef) : null;
     need(ref === null || /^@e\d+(?:~s\d+)?$/.test(ref), 'Unsupported snapshot reference', 'INVALID_OBSERVATION');
     return {id: 'control-' + i, index: n.index ?? i, parent: n.parentIndex ?? null, role, label: String(n.label ?? ''),
       identifier: n.identifier ?? null, value: role === 'securetextbox' ? null : (n.value ?? (role === 'textbox' ? '' : null)),
-      visible: visible(n), enabled: enabled(n), hittable: n.hittable ?? null, ref, ...(n.rect ? {rect: n.rect} : {})};
+      visible: visible(n), enabled: enabled(n), hittable: n.hittable ?? null, ref, ...(n.rect ? {rect: n.rect} : {}),
+      ...(target?.platform === 'android' && target.app ? {bundleId: n.bundleId} : {})};
   });
   const indices = new Map(nodes.map(n => [n.index, n]));
   need(indices.size === nodes.length, 'Snapshot indexes are ambiguous', 'INVALID_OBSERVATION');
@@ -55,6 +98,8 @@ export function normalizeObservation(data, {target = null, id = randomUUID()} = 
       seen.add(p.index); n.visible &&= p.visible; n.enabled &&= p.enabled;
     }
   }
+  if (target?.platform === 'android' && target.app)
+    need(nodes.some(n => n.visible), 'Android foreground ownership is unknown; no visible requested-app nodes', 'INVALID_OBSERVATION');
   const overlays = nodes.filter(n => n.visible && ['alert', 'dialog'].includes(n.role));
   if (target?.platform !== 'web' && target?.app?.includes('.') && data.appBundleId)
     need(data.appBundleId === target.app, 'Snapshot belongs to another app', 'INVALID_OBSERVATION');
