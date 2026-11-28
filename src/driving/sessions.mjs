@@ -1,5 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {shellQuote} from '../presentation.mjs';
 import {createHash, randomUUID} from 'node:crypto';
 import {projectStatus} from '../project.mjs';
 import {checkGraph} from '../graph.mjs';
@@ -53,7 +55,9 @@ export function existingSession(project, options) {
   need(state.schema === schema && state.name === options.name && /^wf-[0-9a-f-]{36}$/.test(state.runnerSession), 'Unowned or invalid session metadata');
   validateTarget(state.target);
   const executable = resolveAgentDevice(options.executable);
-  need(executable === state.executable && hash(executable) === state.executableSha256, 'Session runner executable changed; restore its recorded bytes before continuing');
+  const closeCommand = [process.execPath, fileURLToPath(new URL('../../bin/traverse.mjs', import.meta.url)), 'session', 'close', '--project', path.resolve(project), '--session', state.name, '--agent-device', state.executable].map(shellQuote).join(' ');
+  need(executable === state.executable, `Selected session runner differs from the recorded executable; no operation was attempted. To close this session without device shutdown, run: ${closeCommand}`);
+  need(hash(executable) === state.executableSha256, 'Session runner executable changed; restore its recorded bytes before continuing');
   return {state, directory: dir, runner: wrapRunner(state, dir, options, project)};
 }
 export const lockSession = (session, work) => withLock(path.join(session.directory, 'session.lock'), work);
