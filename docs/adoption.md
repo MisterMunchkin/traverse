@@ -20,7 +20,9 @@ To update an npm installation, prepare and verify the new archive, then delibera
 
 ## Initialize and maintain a project
 
-Inside a supported Expo app with its locked dependencies installed:
+Use the repository's documented Traverse launcher and working directory when it provides them. Record project-specific commands and graph policy in the repository instructions so agents can follow them. See [optional agent guidance](project-setup.md#optional-agent-guidance).
+
+For a standard installation, run these commands inside a supported Expo app with its locked dependencies installed:
 
 ```sh
 traverse init

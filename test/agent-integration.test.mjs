@@ -37,7 +37,12 @@ test('shared install creates one skill and AGENTS pointer without Claude copies,
  for(const name of shared)assert.equal(fs.existsSync(path.join(f.project,name)),true,name);
  for(const name of ['.claude','CLAUDE.md','.wayfinder/settings.json'])assert.equal(fs.existsSync(path.join(f.project,name)),false,name);
  assert.equal(fs.existsSync(path.join(f.root,'home')),false);assert.equal(fs.existsSync(f.log),false);
- assert.ok(read(f,shared[0]).startsWith('---\nname: traverse\n'));assert.ok(read(f,'AGENTS.md').includes(shared[0]));
+ const skill=read(f,shared[0]);
+ assert.ok(skill.startsWith('---\nname: traverse\n'));assert.ok(read(f,'AGENTS.md').includes(shared[0]));
+ assert.match(skill,/Use the repository's documented Traverse launcher and working directory for every command below/);
+ assert.match(skill,/bun run traverse graph check --json/);
+ assert.match(skill,/`npm exec --offline -- traverse \.\.\.`\. Otherwise, use the installed `traverse` on PATH/);
+ assert.match(skill,/Follow the repository's graph freshness and tracking instructions/);
 });
 
 test('omitted or skipped integration preserves graph-only init and existing legacy guidance exactly',t=>{

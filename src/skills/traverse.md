@@ -5,11 +5,14 @@ description: Maintain this repository's Traverse navigation graph and run bounde
 
 # Traverse
 
-Work from the initialized app directory containing `.wayfinder/project.json`. For a repo dev dependency, use `npm exec --offline -- traverse ...`; otherwise use the installed `traverse` on PATH. If neither installation exists, ask for installation rather than fetching an arbitrary registry package. Consult `--help` for current options.
+Use the repository's documented Traverse launcher and working directory for every command below. Check the repository instructions and setup guide first. For example, if the project uses `bun run traverse` from the repository root, run `bun run traverse graph check --json` there.
+
+When the repository does not specify a launcher, work from the initialized app directory containing `.wayfinder/project.json`. If Traverse is installed as a repo dev dependency, use `npm exec --offline -- traverse ...`. Otherwise, use the installed `traverse` on PATH. If neither installation exists, ask for installation rather than fetching an arbitrary registry package. Consult `--help` through the selected launcher.
 
 ## Prepare the task
 
-- Run `traverse doctor --json` (with the invocation prefix above). Doctor checks configuration, not whether a live UI task has passed. Run `traverse graph check --json`; if stale, use `traverse graph refresh --json` and review the graph diff. Source routes are context, not proof of the running screen or build identity.
+- Follow the repository's graph freshness and tracking instructions. Use `traverse graph check --json` to inspect readiness. If the repository has no custom graph workflow, use `traverse graph refresh --json` when the graph is missing or stale and inspect the result. If Traverse requests extractor approval, review the exact artifact through the project's setup procedure.
+- Use `traverse doctor --json` to check configuration. The graph describes declared routes. Verify the running screen and build separately.
 - Project defaults live in `.wayfinder/settings.json`: frontier provider/model/effort, driving policy, action limit and deadline. `traverse init` edits these; `traverse setup` acquires the per-user model cache separately. Do not change defaults or install models merely to run a task. One-run flags can override defaults.
 - Select the actual app URL or bundle/package, platform and an owned device for this run. Use a fresh named session. Do not invent target IDs, launch unrelated apps, or shut down devices you do not own. Traverse delegates UI interaction to agent-device; it does not implement simulator creation/deletion.
 
