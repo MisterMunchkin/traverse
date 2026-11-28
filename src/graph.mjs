@@ -11,6 +11,7 @@ import {runProcess} from './runtime/process.mjs';
 import {readExtractorApproval,writeExtractorApproval,preflightExtractorApproval} from './extractor-approval.mjs';
 
 const SCHEMA = 'wayfinder-repository-graph/1';
+const validationTimeoutMs = 5000;
 const validator = fileURLToPath(new URL('./extractor-pipeline/validate-worker.mjs', import.meta.url));
 const paths = root => ({folder: path.join(root, '.wayfinder'), local: path.join(root, '.wayfinder/local'), artifact: path.join(root, '.wayfinder/extractor/artifact.json'), graph: path.join(root, '.wayfinder/graph.json')});
 function bindings(project, artifact, environment) {
@@ -27,7 +28,7 @@ export function publishGraphPublication({projectRoot,document}){
  return {schema:'wayfinder-graph-result/1',projectRoot,graph,ready:true,graphHash:digest(document),sourceFingerprint:document.inputs.sourceFingerprint,coverage:document.inventory.coverage,authorCalls:0,exitCode:0};
 }
 async function validateInventory(inventory, files, signal, compatibility) {
-  const result = await runProcess(process.execPath, [validator], {input: JSON.stringify({files, compatibility, candidateOutput: JSON.stringify(inventory)}), timeoutMs: 5000, signal, maxBytes: 16 * 1024 * 1024, env: {PATH: path.dirname(process.execPath)}});
+  const result = await runProcess(process.execPath, [validator], {input: JSON.stringify({files, compatibility, candidateOutput: JSON.stringify(inventory)}), timeoutMs: validationTimeoutMs, signal, maxBytes: 16 * 1024 * 1024, env: {PATH: path.dirname(process.execPath)}});
   return JSON.parse(result.stdout);
 }
 export async function checkGraph(project = process.cwd(), {signal} = {}) {
@@ -41,6 +42,8 @@ export async function checkGraph(project = process.cwd(), {signal} = {}) {
     return {schema: 'wayfinder-graph-status/1', projectRoot: root, graph: location.graph, ready: true, sourceFingerprint: saved.inputs.sourceFingerprint, graphHash: digest(saved), coverage: inventory.coverage, authorCalls: 0, exitCode: 0};
   } catch (e) {
     if (signal?.aborted) throw Error('CANCELLED');
+    if (e.record && e.message.startsWith('DEADLINE:'))
+      return {schema: 'wayfinder-graph-status/1', projectRoot: root, graph: location.graph, ready: false, code: 'VALIDATION_TIMEOUT', reason: `Graph validation timed out after ${validationTimeoutMs}ms; retry traverse graph check. The saved graph was not changed.`, exitCode: 1};
     return {schema: 'wayfinder-graph-status/1', projectRoot: root, graph: location.graph, ready: false, reason: e.record ? 'Graph validation failed; inspect the graph and run traverse graph refresh' : e.message, exitCode: 1};
   }
 }
